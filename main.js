@@ -22,7 +22,7 @@
         
       } else {
 
-        cookietable.innerText="extion closed"
+        cookietable.innerText="section closed"
        
        
       }
