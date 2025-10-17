@@ -1,24 +1,59 @@
 
  
   
-  #one {
+  body {
 
     background-color: rgba(81, 143, 213, 0.588);
-    width: 400px;      /* set the popup size you want */
+    margin: 0;
+    padding: 0;
+    width: 600px;
     height: 500px;
-    border-radius: 3%;
-   
-    
+    position:relative
+
   }
+
+ 
   .toggler {
     
    position: absolute;
      top: 10px;
     right: 10px;
 }
-   
-    
-    
+#cookietable {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;             /* controls the width */
+  max-height: 60vh;        /* vertical limit if many rows */
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  
+
+
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 30px;
+  color: #222;
+
+  
+}
+
+#cookietable.show {
+  display: flex;             /* show it */
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+}
+
+#cookietable:hover{
+  font-size: 20px;
+}
+
+
+
+
   
   .toggler input {
     display: none;
