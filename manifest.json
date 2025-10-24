@@ -1,24 +1,27 @@
 {
-    "name": "CookiesShallNotPass",
-    "description": "Blocks unwanted cookies, fully customizable",
-    "version": "1.0.0",
-    "manifest_version": 3,
+  "name": "CookiesShallNotPass",
+  "description": "Blocks unwanted cookies, fully customizable",
+  "version": "1.0.0",
+  "manifest_version": 3,
   
-    "action": {
-      "default_popup": "index.html",
-      "default_icon": "icon.png"
-    },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "icon.png"
+  },
   
-    "permissions": [
-      "cookies",         
-      "storage",      
-      "tabs"             
-    ],
+  "permissions": [
+    "cookies",
+    "storage",
+    "tabs"
+  ],
   
-    "host_permissions": [
-      "<all_urls>"   
-    ] 
+  "host_permissions": [
+    "<all_urls>"
+  ],
   
-  
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
   }
-  
+}
