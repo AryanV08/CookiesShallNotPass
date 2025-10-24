@@ -1,38 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My First Page</title>
+  <title>CookiesShallNotPass</title>
   <link rel="stylesheet" href="index.css">
-  <script src="main.js" defer> </script>
-
+  <script src="main.js" defer></script>
 </head>
 
-<body >
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <h1 class="title">🍪 CookiesShallNotPass</h1>
+      <div class="status-indicator">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Active</span>
+      </div>
+    </div>
+  </header>
 
-<div class="toggler">
-  <input id="toggler-1" name="toggler-1" type="checkbox" value="1">
-  <label for="toggler-1">
-      <svg class="toggler-on" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130.2 130.2">
-          <polyline class="path check" points="100.2,40.2 51.5,88.8 29.8,67.5"></polyline>
-      </svg>
-      <svg class="toggler-off" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130.2 130.2">
-          <line class="path line" x1="34.4" y1="34.4" x2="95.8" y2="95.8"></line>
-          <line class="path line" x1="95.8" y1="34.4" x2="34.4" y2="95.8"></line>
-      </svg>
-  </label>
-   
-  </div>
-  <div id = "cookietable">
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Main Toggle Section -->
+    <section class="toggle-section">
+      <div class="toggle-container">
+        <label class="toggle-label" for="mainToggle">
+          <span class="toggle-text">Extension Status</span>
+          <div class="toggle-switch">
+            <input type="checkbox" id="mainToggle" checked>
+            <span class="slider"></span>
+          </div>
+        </label>
+      </div>
+    </section>
 
-  </div>
+    <!-- Statistics Section -->
+    <section class="stats-section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="blockedCount">0</div>
+          <div class="stat-label">Cookies Blocked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="allowedCount">0</div>
+          <div class="stat-label">Cookies Allowed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="bannersRemoved">0</div>
+          <div class="stat-label">Banners Removed</div>
+        </div>
+      </div>
+    </section>
 
-  
+    <!-- Whitelist Section -->
+    <section class="whitelist-section">
+      <div class="section-header">
+        <h3>Trusted Sites</h3>
+        <button class="btn btn-secondary" id="addSiteBtn">+ Add Site</button>
+      </div>
+      <div class="whitelist-container">
+        <div class="input-group">
+          <input type="text" id="siteInput" placeholder="Enter domain (e.g., example.com)" class="site-input">
+          <button class="btn btn-primary" id="addSiteConfirm">Add</button>
+        </div>
+        <div class="whitelist-list" id="whitelistList">
+          <!-- Whitelisted sites will be populated here -->
+        </div>
+      </div>
+    </section>
 
-  
+    <!-- Blocklist Section -->
+    <section class="blocklist-section">
+      <div class="section-header">
+        <h3>Blocklist Management</h3>
+        <button class="btn btn-secondary" id="importBlocklistBtn">Import List</button>
+      </div>
+      <div class="blocklist-container">
+        <div class="blocklist-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="strictMode" checked>
+            <span class="checkmark"></span>
+            Strict Mode (Block all non-essential cookies)
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="removeBanners" checked>
+            <span class="checkmark"></span>
+            Auto-remove cookie banners
+          </label>
+        </div>
+        <div class="import-section">
+          <input type="file" id="blocklistFile" accept=".json,.txt" style="display: none;">
+          <div class="file-drop-zone" id="fileDropZone">
+            <p>Drop blocklist file here or click to browse</p>
+            <small>Supports JSON and TXT formats</small>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <!-- Settings Section -->
+    <section class="settings-section">
+      <div class="section-header">
+        <h3>Settings</h3>
+        <button class="btn btn-secondary" id="advancedSettingsBtn">Advanced</button>
+      </div>
+      <div class="settings-container">
+        <div class="setting-item">
+          <label for="notificationLevel">Notification Level</label>
+          <select id="notificationLevel" class="setting-select">
+            <option value="none">None</option>
+            <option value="minimal">Minimal</option>
+            <option value="detailed" selected>Detailed</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="autoWhitelist">Auto-whitelist frequently visited sites</label>
+          <div class="toggle-switch small">
+            <input type="checkbox" id="autoWhitelist">
+            <span class="slider"></span>
+          </div>
+        </div>
+        <div class="setting-item">
+          <label for="privacyMode">Enhanced Privacy Mode</label>
+          <div class="toggle-switch small">
+            <input type="checkbox" id="privacyMode">
+            <span class="slider"></span>
+          </div>
+        </div>
+      </div>
+    </section>
 
+    <!-- Current Site Info -->
+    <section class="current-site-section">
+      <div class="current-site-info">
+        <h4>Current Site</h4>
+        <div class="site-details">
+          <span class="site-url" id="currentSiteUrl">No active tab</span>
+          <div class="site-actions">
+            <button class="btn btn-small" id="whitelistCurrentBtn">Whitelist</button>
+            <button class="btn btn-small btn-danger" id="blockCurrentBtn">Block</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <span class="version">v1.0.0</span>
+      <div class="footer-links">
+        <button class="link-btn" id="helpBtn">Help</button>
+        <button class="link-btn" id="aboutBtn">About</button>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
+
