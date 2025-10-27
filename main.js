@@ -49,6 +49,24 @@
       aboutBtn: document.getElementById('aboutBtn')
     };
 
+    async function addSiteToWhitelistUI() {
+      const domain = elements.siteInput.value.trim().toLowerCase();
+    
+      // You already validate domain in UI; you can keep that and still call the pure fn:
+      addSiteToWhitelist(domain, elements.whitelistList, {
+        getItem: (k) => JSON.stringify(extensionState.whitelist),
+        setItem: (k, v) => { extensionState.whitelist = JSON.parse(v); }
+      });
+    
+      await saveState();
+      updateWhitelistDisplay();
+      elements.siteInput.value = '';
+      elements.siteInput.style.display = 'none';
+      elements.addSiteConfirm.style.display = 'none';
+      showNotification(`Added ${domain} to whitelist`);
+    }
+    
+
     // Load saved state
     await loadState();
 
@@ -61,6 +79,8 @@
     // Get current tab info
     await updateCurrentSite();
   }
+
+
 
   async function loadState() {
     try {
@@ -366,6 +386,8 @@
       showNotification('Error blocking site', 'error');
     }
   }
+
+  
 
   function showNotification(message, type = 'success') {
     // Create notification element
