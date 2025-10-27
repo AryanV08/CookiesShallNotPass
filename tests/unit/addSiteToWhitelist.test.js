@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { addSiteToWhitelist } from '../../main.js';
+import { addSiteToWhitelist } from '../../whitelist.js';
 
 
 describe('addSiteToWhitelist (pure)', () => {

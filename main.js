@@ -1,3 +1,6 @@
+
+import { addSiteToWhitelist } from "./whitelist.js";
+
 (() => {
   // State management
   let extensionState = {
@@ -20,6 +23,15 @@
 
   // Initialize the extension
   window.addEventListener("load", init);
+
+  async function addSiteToWhitelistUI() {
+    const domain = elements.siteInput.value.trim().toLowerCase();
+    addSiteToWhitelist(domain, elements.whitelistList, {
+      getItem: () => JSON.stringify(extensionState.whitelist),
+      setItem: (_k, v) => { extensionState.whitelist = JSON.parse(v); }
+    });
+    // ... saveState/updateUI/etc.
+  }
 
   async function init() {
     // Cache DOM elements
@@ -49,22 +61,6 @@
       aboutBtn: document.getElementById('aboutBtn')
     };
 
-    async function addSiteToWhitelistUI() {
-      const domain = elements.siteInput.value.trim().toLowerCase();
-    
-      // You already validate domain in UI; you can keep that and still call the pure fn:
-      addSiteToWhitelist(domain, elements.whitelistList, {
-        getItem: (k) => JSON.stringify(extensionState.whitelist),
-        setItem: (k, v) => { extensionState.whitelist = JSON.parse(v); }
-      });
-    
-      await saveState();
-      updateWhitelistDisplay();
-      elements.siteInput.value = '';
-      elements.siteInput.style.display = 'none';
-      elements.addSiteConfirm.style.display = 'none';
-      showNotification(`Added ${domain} to whitelist`);
-    }
     
 
     // Load saved state
