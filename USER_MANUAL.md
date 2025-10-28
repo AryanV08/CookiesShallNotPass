@@ -201,7 +201,7 @@ In the project folder:
 - Click Load unpacked and select the project folder  
 - Check that the extension icon appears and the popup opens correctly
 
--**Test key features**
+- **Test key features**
 - Turn the blocker on/off
 - Add/remove sites from whitelist/blacklist
 - Open the dashboard and confirm stats and settings work
