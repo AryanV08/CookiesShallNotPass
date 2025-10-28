@@ -120,8 +120,8 @@ Once the startup process is complete, ie, the extension icon is clicked and succ
 6. To clone the repository locally, on the GitHub page, click the “Code” button (green dropdown).  
 7. Copy the HTTPS URL: https://github.com/AryanV08/CookiesShallNotPass.git  
 8. Open a terminal or command prompt and run:  
-- git clone https://github.com/AryanV08/CookiesShallNotPass.git
-- cd CookiesShallNotPass
+- `git clone https://github.com/AryanV08/CookiesShallNotPass.git`
+- `cd CookiesShallNotPass`
 9. Now you can see all the source code!  
 
 ---
@@ -170,8 +170,8 @@ Ensure the following folders are present:
 
 ### How to test the software
 To run the provided test suite, run:  
-- npn run test
-- in the root directory of the repository.  
+- `npm run test`
+in the root directory of the repository.  
 
 The tests will automatically be run on each commit and pull request to the github repository.  
 
@@ -183,7 +183,7 @@ The tests will automatically be run on each commit and pull request to the githu
 3. **Write a Test Case:** Each test is defined using the `test()` or `it()` function.  
 4. **Group Tests with describe():** For better organization, related tests are grouped using `describe()`.  
 5. **Run the Test:** Run Jest with:  
-- npm run test
+- `npm run test`
 
 ---
 
@@ -193,8 +193,8 @@ Make sure all changes are saved and the code is up to date.
 
 - **Run tests**  
 In the project folder:  
-- npm run test
-- Make sure all tests pass.  
+- `npm run test`
+Make sure all tests pass.  
 
 - **Load the extension in Chrome**  
 - Open Chrome → Settings → Extensions → Enable Developer mode  
