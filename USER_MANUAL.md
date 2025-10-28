@@ -171,7 +171,7 @@ Ensure the following folders are present:
 ### How to test the software
 To run the provided test suite, run:  
 - npn run test
-in the root directory of the repository.  
+- in the root directory of the repository.  
 
 The tests will automatically be run on each commit and pull request to the github repository.  
 
@@ -194,7 +194,7 @@ Make sure all changes are saved and the code is up to date.
 - **Run tests**  
 In the project folder:  
 - npm run test
-Make sure all tests pass.  
+- Make sure all tests pass.  
 
 - **Load the extension in Chrome**  
 - Open Chrome → Settings → Extensions → Enable Developer mode  
