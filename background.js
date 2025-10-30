@@ -1,64 +1,123 @@
-// Simple logger utility
-const Logger = {
-  async log(domain, action) {
-    const result = await chrome.storage.local.get("logs");
-    const logs = result.logs || [];
-    logs.push({ timestamp: new Date().toISOString(), domain, action });
-    await chrome.storage.local.set({ logs });
-  },
+import { Storage } from './storage.js';
+import { createBlockRule, updateRules, ESSENTIAL_COOKIES } from './rulesEngine.js';
 
-  async getLogs() {
-    const result = await chrome.storage.local.get("logs");
-    return result.logs || [];
-  },
+console.log("[CSP] background loaded");
 
-  async clearLogs() {
-    await chrome.storage.local.set({ logs: [] });
-  }
+let state = {
+  blocked: 0,
+  allowed: 0,
+  bannersRemoved: 0,
+  blacklist: [],
+  whitelist: [],
+  active: true,
+  autoBlock: true
 };
 
-// Helper to get storage items
-async function getFromStorage(key) {
-  const result = await chrome.storage.sync.get(key);
-  return result[key] || [];
+// Load state from storage
+(async () => {
+  await Storage.loadFromSync();
+  const saved = await Storage.get("state");
+  if (saved) state = saved;
+
+  // Clear old rules
+  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const removeIds = existing.map(r => r.id);
+  await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: removeIds, addRules: [] });
+
+  if (!state.autoBlock && state.blacklist.length > 0) {
+    const rules = state.blacklist.map(d => createBlockRule(d));
+    await updateRules(rules);
+  }
+})();
+
+async function saveState() {
+  await Storage.set("state", state);
 }
 
-// Background message listener
+// Check if cookie is essential
+function isEssentialCookie(cookie) {
+  if (ESSENTIAL_COOKIES.includes(cookie.name)) return true;
+  if (cookie.httpOnly || cookie.secure) return true;
+  if (!cookie.expirationDate) return true;
+  return false;
+}
+
+// ----- Messages -----
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
-    const domain = msg.url ? new URL(msg.url).hostname : null;
-
-    switch (msg.type) {
-      case "toggleWhitelist":
-        let whitelist = await getFromStorage("whitelist");
-        if (domain) {
-          if (whitelist.includes(domain)) {
-            whitelist = whitelist.filter(d => d !== domain);
-            await Logger.log(domain, "removed from whitelist");
-          } else {
-            whitelist.push(domain);
-            await Logger.log(domain, "added to whitelist");
-          }
-          await chrome.storage.sync.set({ whitelist });
-        }
-        sendResponse({ whitelist });
+    switch(msg.type) {
+      case "GET_STATE":
+        sendResponse({ success: true, state });
         break;
 
-      case "getLogs":
-        const logs = await Logger.getLogs();
-        sendResponse({ logs });
+      case "GET_STATS":
+        sendResponse({ success: true, stats: { blocked: state.blocked, allowed: state.allowed, bannersRemoved: state.bannersRemoved } });
         break;
 
-      case "clearLogs":
-        await Logger.clearLogs();
-        sendResponse({ status: "cleared" });
+      case "UPDATE_STATE":
+        if (msg.state) state = { ...state, ...msg.state };
+        await saveState();
+        sendResponse({ success: true, state });
+        break;
+
+      case "BLOCK_SITE": {
+        const domain = msg.domain;
+        if (!state.blacklist.includes(domain)) state.blacklist.push(domain);
+        const idx = state.whitelist.indexOf(domain);
+        if (idx !== -1) state.whitelist.splice(idx, 1);
+        await updateRules(state.blacklist.map(d => createBlockRule(d)));
+        await saveState();
+        sendResponse({ success: true, stats: state });
+        break;
+      }
+
+      case "WHITELIST_SITE": {
+        const domain = msg.domain;
+        if (!state.whitelist.includes(domain)) state.whitelist.push(domain);
+        const idx = state.blacklist.indexOf(domain);
+        if (idx !== -1) state.blacklist.splice(idx, 1);
+        await updateRules(state.blacklist.map(d => createBlockRule(d)));
+        await saveState();
+        sendResponse({ success: true, stats: state });
+        break;
+      }
+
+      case "LOG_BANNER_REMOVED":
+        state.bannersRemoved += msg.count || 1;
+        await saveState();
+        sendResponse({ success: true, stats: state });
         break;
 
       default:
-        console.warn("Unknown message:", msg);
-        sendResponse({ status: "unknown" });
+        sendResponse({ success: false });
     }
   })();
+  return true;
+});
 
-  return true; // important for async sendResponse
+// ----- Cookie tracking -----
+chrome.cookies.onChanged.addListener(change => {
+  if (!state.active) return;
+
+  const { removed, cookie } = change;
+  const domain = cookie.domain.replace(/^\./, '');
+  const inWhitelist = state.whitelist.includes(domain);
+
+  if (isEssentialCookie(cookie)) return;
+
+  if (state.autoBlock && !inWhitelist) {
+    if (!removed) state.blocked++;
+  } else if (!state.autoBlock && state.blacklist.includes(domain)) {
+    if (!removed) state.blocked++;
+  }
+
+  saveState();
+});
+
+// Sync every 5 minutes
+setInterval(() => Storage.syncToCloud(), 5*60*1000);
+
+// Sync on suspend
+chrome.runtime.onSuspend.addListener(() => {
+  Storage.syncToCloud();
 });

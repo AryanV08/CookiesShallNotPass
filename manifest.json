@@ -1,23 +1,38 @@
 {
   "manifest_version": 3,
   "name": "CookiesShallNotPass",
-  "version": "1.0",
+  "version": "1.0.0",
+  "description": "Blocks unwanted cookies, fully customizable",
   "permissions": [
     "cookies",
     "storage",
     "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
     "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "popup/popup.html",
+    "default_icon": "icon.png"
   },
-   "content_scripts": [
+  "web_accessible_resources": [
+  {
+    "resources": [
+      "popup/dashboard.html",
+      "popup/dashboard.js",
+      "popup/dashboard.css"
+    ],
+    "matches": ["<all_urls>"]
+  }
+],
+
+  "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
