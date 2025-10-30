@@ -180,6 +180,12 @@ import { addSiteToWhitelist } from "./whitelist.js";
     // Footer buttons
     elements.helpBtn.addEventListener('click', showHelp);
     elements.aboutBtn.addEventListener('click', showAbout);
+
+  // Dashboard Button 
+    elements.dashboardBtn = document.getElementById('dashboardBtn');
+    elements.dashboardBtn.addEventListener('click', openDashboard);
+
+
   }
 
   function updateUI() {
@@ -425,6 +431,13 @@ import { addSiteToWhitelist } from "./whitelist.js";
   function showAbout() {
     showNotification('CookiesShallNotPass v1.0.0 - Automatic cookie management for privacy-conscious users.');
   }
+  //IMPLEMENT dashboard.html and dashboard.css
+  function openDashboard() {
+    const dashboardUrl = chrome.runtime.getURL('dashboard.html');
+    chrome.tabs.create({ url: dashboardUrl });
+  }
+  
+
 
   // Add CSS animations
   const style = document.createElement('style');

@@ -38,10 +38,12 @@ body {
   margin: 0;
 }
 
+
 .status-indicator {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left : 34px;
 }
 
 .status-dot {
@@ -510,6 +512,7 @@ input:checked + .slider:before {
   color: #3182ce;
 }
 
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -527,6 +530,38 @@ input:checked + .slider:before {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.5);
+}
+/* Dashboard Button */
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 24px;
+
+}
+
+.btn-dashboard {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(49, 130, 206, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin-left: 12px;
+}
+
+.btn-dashboard:hover {
+  background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(49, 130, 206, 0.4);
+}
+
+.btn-dashboard:active {
+  transform: scale(0.97);
 }
 
 /* Responsive adjustments */
