@@ -5,7 +5,7 @@
   "manifest_version": 3,
   
   "action": {
-    "default_popup": "popup/dashboard.html",
+    "default_popup": "popup/popup.html",
     "default_icon": "icon.png"
   },
   
