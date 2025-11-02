@@ -10,42 +10,88 @@
 <body>
   <div class="dashboard-container">
 
-    <h1>🍪 CookiesShallNotPass Dashboard</h1>
+    <header class="dashboard-header" id="overview">
+      <h1>CookiesShallNotPass Dashboard</h1>
+      <p class="tagline">Review your protection status, tune automation controls, and manage every advanced tool in one place.</p>
+    </header>
 
-    <!-- Preferences: same toggle as popup -->
-   <section class="prefs">
-  <h2>Preferences</h2>
-  <label class="switch">
-    <input type="checkbox" id="autoBlockToggle">
-    <span class="slider round"></span>
-  </label>
-  <span class="switch-label-text">Auto-Blocking</span>
-
-  <label class="switch">
-    <input type="checkbox" id="blockerActiveToggle">
-    <span class="slider round"></span>
-  </label>
-  <span class="switch-label-text">Blocker Active</span>
-</section>
-
+    <!-- Preferences -->
+    <section class="prefs" id="controlsSection">
+      <h2>Protection Controls</h2>
+      <p class="section-subtitle">Adjust the global switches that determine how cookies are handled across every site.</p>
+      <div class="toggle-grid">
+        <div class="toggle-card">
+          <div class="toggle-text">
+            <span class="toggle-title">Auto-Blocking</span>
+            <span class="toggle-help">Automatically remove non-essential cookies while you browse.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="autoBlockToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <div class="toggle-card">
+          <div class="toggle-text">
+            <span class="toggle-title">Blocker Active</span>
+            <span class="toggle-help">Pause or resume the extension without changing your lists.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="blockerActiveToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+    </section>
 
     <!-- Stats -->
-    <section class="stats">
-      <h2>Statistics</h2>
-      <div class="stat">
-        <span id="totalBlocked">0</span> Cookies Blocked
-      </div>
-      <div class="stat">
-        <span id="totalAllowed">0</span> Cookies Allowed
-      </div>
-      <div class="stat">
-        <span id="totalBanners">0</span> Banners Removed
+    <section class="stats" id="statsSection">
+      <h2>Activity Overview</h2>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="stat-number" id="totalBlocked">0</span>
+          <span class="stat-label">Cookies Blocked</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="totalAllowed">0</span>
+          <span class="stat-label">Cookies Allowed</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="totalBanners">0</span>
+          <span class="stat-label">Banners Removed</span>
+        </div>
       </div>
     </section>
 
     <!-- Lists -->
-    <section class="lists">
-      <h2>Whitelist & Blacklist</h2>
+    <section class="lists" id="listsSection">
+      <header class="section-heading">
+        <div>
+          <h2>Site Lists</h2>
+          <p class="section-subtitle">Fine-tune which domains stay clean or are allowed to set cookies.</p>
+        </div>
+        <div class="list-metrics">
+          <div class="metric-pill">
+            <span class="metric-value" id="whitelistCount">0</span>
+            <span class="metric-label">Whitelisted</span>
+          </div>
+          <div class="metric-pill">
+            <span class="metric-value" id="blacklistCount">0</span>
+            <span class="metric-label">Blacklisted</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="list-preview-row">
+        <div class="list-preview-card">
+          <h3>Recent Whitelist</h3>
+          <div class="list-preview" id="whitelistPreview"></div>
+        </div>
+        <div class="list-preview-card">
+          <h3>Recent Blacklist</h3>
+          <div class="list-preview" id="blacklistPreview"></div>
+        </div>
+      </div>
+
       <div class="list-container">
         <div>
           <h3 id="whitelistHeading">Whitelist</h3>
@@ -60,21 +106,44 @@
           <button id="addBlacklistBtn">Add</button>
         </div>
       </div>
+      <p class="section-footnote">Tip: enter domains without protocol (for example: example.com).</p>
     </section>
 
     <!-- Import / Export -->
-    <section class="import-export">
-      <h2>Import / Export Lists</h2>
-      <input type="file" id="importFile">
-      <button id="importBtn">Import</button>
-      <button id="exportBtn">Export</button>
+    <section class="import-export" id="importExportSection">
+      <h2>Import &amp; Export Lists</h2>
+      <p class="section-subtitle">Back up your configuration or share it with teammates using the JSON format.</p>
+      <div class="import-grid">
+        <div class="import-controls">
+          <input type="file" id="importFile" accept="application/json">
+          <div class="button-row">
+            <button id="importBtn">Import</button>
+            <button id="exportBtn" class="secondary">Export Current Lists</button>
+          </div>
+        </div>
+        <div class="import-help">
+          <ul>
+            <li>Import files created by this extension to sync across browsers.</li>
+            <li>Export before reinstalling or when sharing curated lists.</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
     <!-- Report a Bug -->
-    <section class="report">
+    <section class="report" id="reportSection">
       <h2>Report a Bug</h2>
-      <input type="text" id="bugSite" placeholder="Affected site">
-      <textarea id="bugDesc" placeholder="Description"></textarea>
+      <p class="section-subtitle">Spotted a banner that slipped through or a site behaving strangely? Let us know.</p>
+      <div class="report-grid">
+        <div class="form-group">
+          <label for="bugSite">Affected site</label>
+          <input type="text" id="bugSite" placeholder="e.g. news.example.com">
+        </div>
+        <div class="form-group">
+          <label for="bugDesc">Description</label>
+          <textarea id="bugDesc" placeholder="Provide details so we can reproduce the issue."></textarea>
+        </div>
+      </div>
       <button id="reportBtn">Submit</button>
     </section>
 
