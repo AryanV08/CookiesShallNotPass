@@ -63,6 +63,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- Dashboard button ---
   const dashboardBtn = document.getElementById("dashboardBtn");
   dashboardBtn.addEventListener("click", () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("popup/dashboard.html#overview") });
+    chrome.tabs.create({ url: chrome.runtime.getURL("popup/dashboard.html") });
   });
 });
