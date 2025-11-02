@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CookiesShallNotPass</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <div class="popup-container">
+
+    <!-- Header: Name + toggle -->
+    <div class="header">
+      <h1 class="title">🍪 CookiesShallNotPass</h1>
+      <label class="switch">
+        <input type="checkbox" id="extensionToggle" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-number" id="blockedCount">0</span>
+        <span class="stat-label">Cookies Blocked</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number" id="allowedCount">0</span>
+        <span class="stat-label">Cookies Allowed</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number" id="bannersRemoved">0</span>
+        <span class="stat-label">Banners Removed</span>
+      </div>
+    </div>
+
+    <!-- Current site -->
+    <div class="current-site stats">
+      <div class="site-name">Current Site: <span id="currentSite">Loading...</span></div>
+      <div class="site-buttons">
+        <button id="whitelistBtn" class="btn white">Add to Whitelist</button>
+        <button id="blockBtn" class="btn red">Block</button>
+      </div>
+    </div>
+
+    <!-- Dashboard button -->
+    <div class="dashboard">
+      <button id="dashboardBtn" class="btn white">Go to Dashboard</button>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+body {
+  font-family: Arial, sans-serif;
+  width: 280px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  margin: 0;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.popup-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Header: Name + toggle */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+.switch input { display:none; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top:0; left:0; right:0; bottom:0;
+  background-color:#ccc;
+  border-radius: 20px;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content:"";
+  height:16px; width:16px;
+  left:2px; bottom:2px;
+  background-color:white;
+  border-radius:50%;
+  transition:.4s;
+}
+input:checked + .slider { background-color:#48bb78; }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* Stats */
+.stats {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+.stat {
+  flex: 1;
+}
+.stat-number {
+  display: block;
+  font-size: 16px;
+  font-weight: bold;
+}
+.stat-label {
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+  color: #e2e8f0;
+}
+
+/* Current site styled like stats */
+.current-site.stats {
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+/* Buttons */
+.site-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.white { background: #fff; color: #333; }
+.red { background: #f56565; color: #fff; }
+
+/* Dashboard button */
+.dashboard button {
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  background: #fff;
+  color: #333;
+  border: none;
+  transition: 0.2s;
+}
+.dashboard button:hover {
+  background: #e2e8f0;
+}

@@ -5,19 +5,37 @@
   "manifest_version": 3,
   
   "action": {
-    "default_popup": "index.html",
+    "default_popup": "popup/dashboard.html",
     "default_icon": "icon.png"
   },
   
   "permissions": [
     "cookies",
     "storage",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
     "tabs"
   ],
+
+  "web_accessible_resources": [
+  {
+    "resources": [
+      "popup/dashboard.html",
+      "popup/dashboard.js",
+      "popup/dashboard.css"
+    ],
+    "matches": ["<all_urls>"]
+  }
+],
   
   "host_permissions": [
     "<all_urls>"
   ],
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   
   "icons": {
     "16": "icon.png",
