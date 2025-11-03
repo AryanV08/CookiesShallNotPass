@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CookiesShallNotPass Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="dashboard.js" defer></script>
+</head>
+<body>
+  <div class="dashboard-container">
+
+    <h1>🍪 CookiesShallNotPass Dashboard</h1>
+
+    <!-- Preferences: same toggle as popup -->
+   <section class="prefs">
+  <h2>Preferences</h2>
+  <label class="switch">
+    <input type="checkbox" id="autoBlockToggle">
+    <span class="slider round"></span>
+  </label>
+  <span class="switch-label-text">Auto-Blocking</span>
+
+  <label class="switch">
+    <input type="checkbox" id="blockerActiveToggle">
+    <span class="slider round"></span>
+  </label>
+  <span class="switch-label-text">Blocker Active</span>
+</section>
+
+
+    <!-- Stats -->
+    <section class="stats">
+      <h2>Statistics</h2>
+      <div class="stat">
+        <span id="totalBlocked">0</span> Cookies Blocked
+      </div>
+      <div class="stat">
+        <span id="totalAllowed">0</span> Cookies Allowed
+      </div>
+      <div class="stat">
+        <span id="totalBanners">0</span> Banners Removed
+      </div>
+    </section>
+
+    <!-- Lists -->
+    <section class="lists">
+      <h2>Whitelist & Blacklist</h2>
+      <div class="list-container">
+        <div>
+          <h3 id="whitelistHeading">Whitelist</h3>
+          <ul id="whitelist"></ul>
+          <input type="text" id="whitelistInput" placeholder="Add site">
+          <button id="addWhitelistBtn">Add</button>
+        </div>
+        <div>
+          <h3 id="blacklistHeading">Blacklist</h3>
+          <ul id="blacklist"></ul>
+          <input type="text" id="blacklistInput" placeholder="Add site">
+          <button id="addBlacklistBtn">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Import / Export -->
+    <section class="import-export">
+      <h2>Import / Export Lists</h2>
+      <input type="file" id="importFile">
+      <button id="importBtn">Import</button>
+      <button id="exportBtn">Export</button>
+    </section>
+
+    <!-- Report a Bug -->
+    <section class="report">
+      <h2>Report a Bug</h2>
+      <input type="text" id="bugSite" placeholder="Affected site">
+      <textarea id="bugDesc" placeholder="Description"></textarea>
+      <button id="reportBtn">Submit</button>
+    </section>
+
+  </div>
+</body>
+</html>
