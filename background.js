@@ -1,5 +1,3 @@
-
-// background.js
 import { Storage } from './storage.js';
 import { updateRules, ESSENTIAL_COOKIES } from './rulesEngine.js';
 
@@ -34,6 +32,7 @@ async function saveState() {
   const saved = await Storage.get("state");
   if (saved) state = saved;
 
+  // Initialize DNR rules based on the blacklist
   await updateRules();
 })();
 
@@ -56,6 +55,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!state.blacklist.includes(domain)) state.blacklist.push(domain);
         state.whitelist = state.whitelist.filter(d => d !== domain);
         await saveState();
+        await updateRules();
         sendResponse({ success: true, stats: state });
         break;
       }
@@ -65,6 +65,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (!state.whitelist.includes(domain)) state.whitelist.push(domain);
         state.blacklist = state.blacklist.filter(d => d !== domain);
         await saveState();
+        await updateRules();
         sendResponse({ success: true, stats: state });
         break;
       }
@@ -82,7 +83,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true;
 });
 
-// ---------------- Cookie Removal ----------------
 chrome.cookies.onChanged.addListener(change => {
   if (!state.active || change.removed) return;
 
@@ -90,37 +90,36 @@ chrome.cookies.onChanged.addListener(change => {
   const domain = cookie.domain.replace(/^\./, '');
   const inWhitelist = state.whitelist.some(d => domainMatch(domain, d));
 
-  // Ignore essential cookies or whitelisted domains
-  if (inWhitelist || ESSENTIAL_COOKIES.includes(cookie.name)) return;
+  if (inWhitelist || ESSENTIAL_COOKIES.includes(cookie.name)) {
+    console.log("[CSP] Cookie allowed via whitelist or essential:", cookie.name, "Domain:", domain);
+    state.allowed++;
+    saveState();  
+    return;
+  } 
 
-  // Only remove if autoBlock is enabled or domain is blacklisted
+  const cookieKey = `${domain}:${cookie.name}`;
+  if (recentlyBlockedCookies.has(cookieKey)) {
+    console.log("[CSP] Cookie already blocked recently, skipping:", cookieKey);
+    return;
+  }
+
   if (state.autoBlock || state.blacklist.includes(domain)) {
-    // Avoid blocking the same cookie within the cooldown period
-    if (recentlyBlockedCookies.has(cookie.name + domain)) {
-      console.log("[CSP] cookie already blocked recently:", cookie.name, domain);
-      return; // Skip this blocking attempt
-    }
+    console.log("[CSP] Cookie blocked via onChanged:", cookie.name, "Domain:", domain);
 
-    // Block the cookie
-    chrome.cookies.remove({
-      url: (cookie.secure ? "https://" : "http://") + cookie.domain + cookie.path,
-      name: cookie.name
-    }, (details) => {
-      if (details && details.url) {
-        state.blocked++;
-        recentlyBlockedCookies.add(cookie.name + domain); // Add to the recently blocked set
-        setTimeout(() => recentlyBlockedCookies.delete(cookie.name + domain), BLOCK_COOLDOWN_TIME); // Remove from set after cooldown
-        saveState();
-        
-        // Log blocked cookie details to the console
-        console.log("[CSP] Blocked cookie:", cookie.name, "Domain:", domain, "URL:", details.url);
-      }
-    });
+    // Directly increment the blocked count in the same background script
+    state.blocked++;
+    saveState(); // Make sure to save the state after the increment
+
+    recentlyBlockedCookies.add(cookieKey);
+    setTimeout(() => recentlyBlockedCookies.delete(cookieKey), BLOCK_COOLDOWN_TIME);
   }
 });
+
+
 
 
 
 // ---------------- Cloud Sync ----------------
 setInterval(() => Storage.syncToCloud(), 5 * 60 * 1000);
 chrome.runtime.onSuspend.addListener(() => Storage.syncToCloud());
+
