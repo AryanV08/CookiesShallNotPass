@@ -1,62 +1,66 @@
 import { expect } from 'chai';
-import { addSiteToWhitelist } from '../../whitelist.js';
+import { createBlockRule, updateRules, TRACKER_DOMAINS } from '../../rulesEngine.js';
 
+describe('rulesEngine', () => {
+  describe('createBlockRule', () => {
+    it('produces a block rule with expected shape and increments ids', () => {
+      const firstRule = createBlockRule('example.com');
+      expect(firstRule.id).to.be.a('number');
+      expect(firstRule.priority).to.equal(1);
+      expect(firstRule.action).to.deep.equal({ type: 'block' });
+      expect(firstRule.condition.urlFilter).to.equal('*://*.example.com/*');
+      expect(firstRule.condition.resourceTypes).to.include.members([
+        'main_frame',
+        'sub_frame',
+        'xmlhttprequest',
+        'script',
+        'image',
+        'websocket'
+      ]);
 
-describe('addSiteToWhitelist (pure)', () => {
-  let mockStorage;
-  let whitelistListEl;
-
-  beforeEach(() => {
-    whitelistListEl = document.createElement('div');
-    whitelistListEl.id = 'whitelistList';
-
-    mockStorage = {
-      data: {},
-      getItem(key) { return this.data[key] || null; },
-      setItem(key, val) { this.data[key] = val; },
-      clear() { this.data = {}; }
-    };
+      const secondRule = createBlockRule('other.test');
+      expect(secondRule.id).to.equal(firstRule.id + 1);
+      expect(secondRule.condition.urlFilter).to.equal('*://*.other.test/*');
+    });
   });
 
-  it('adds a valid domain to storage and updates DOM', () => {
-    const ok = addSiteToWhitelist('example.com', whitelistListEl, mockStorage);
-    expect(ok).to.equal(true);
+  describe('updateRules', () => {
+    let originalChrome;
 
-    const list = JSON.parse(mockStorage.getItem('whitelist'));
-    expect(list).to.deep.equal(['example.com']);
+    beforeEach(() => {
+      originalChrome = global.chrome;
+    });
 
-    expect(whitelistListEl.children.length).to.equal(1);
-    expect(whitelistListEl.children[0].className).to.equal('whitelist-item');
-    expect(whitelistListEl.children[0].textContent).to.equal('example.com');
-  });
+    afterEach(() => {
+      global.chrome = originalChrome;
+    });
 
-  it('prevents duplicates', () => {
-    addSiteToWhitelist('example.com', whitelistListEl, mockStorage);
-    addSiteToWhitelist('example.com', whitelistListEl, mockStorage);
+    it('replaces existing rules with tracker block rules', async () => {
+      const existingRules = [{ id: 5 }, { id: 9 }];
+      let capturedArgs = null;
 
-    const list = JSON.parse(mockStorage.getItem('whitelist'));
-    expect(list).to.deep.equal(['example.com']);
-    expect(whitelistListEl.children.length).to.equal(1);
-  });
+      global.chrome = {
+        ...originalChrome,
+        declarativeNetRequest: {
+          getDynamicRules: async () => existingRules,
+          updateDynamicRules: async args => {
+            capturedArgs = args;
+            return true;
+          }
+        }
+      };
 
-  it('returns false for invalid input', () => {
-    const ok = addSiteToWhitelist('', whitelistListEl, mockStorage);
-    expect(ok).to.equal(false);
-    expect(mockStorage.getItem('whitelist')).to.equal(null);
-    expect(whitelistListEl.children.length).to.equal(0);
-  });
+      await updateRules();
 
-  it('works without DOM element (storage-only)', () => {
-    const ok = addSiteToWhitelist('site.org', null, mockStorage);
-    expect(ok).to.equal(true);
-    const list = JSON.parse(mockStorage.getItem('whitelist'));
-    expect(list).to.deep.equal(['site.org']);
-  });
+      expect(capturedArgs).to.exist;
+      expect(capturedArgs.removeRuleIds).to.deep.equal(existingRules.map(r => r.id));
 
-  it('accepts dashed/subdomain formats', () => {
-    const ok = addSiteToWhitelist('cdn-assets.example.co.uk', whitelistListEl, mockStorage);
-    expect(ok).to.equal(true);
-    const list = JSON.parse(mockStorage.getItem('whitelist'));
-    expect(list).to.include('cdn-assets.example.co.uk');
+      const expectedFilters = TRACKER_DOMAINS.map(domain => `*://*.${domain}/*`);
+      const actualFilters = capturedArgs.addRules.map(rule => rule.condition.urlFilter);
+      expect(actualFilters).to.deep.equal(expectedFilters);
+
+      const ruleIds = capturedArgs.addRules.map(rule => rule.id);
+      expect(new Set(ruleIds).size).to.equal(ruleIds.length);
+    });
   });
 });
