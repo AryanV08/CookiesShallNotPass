@@ -4,22 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CookiesShallNotPass</title>
+
+  <!-- popup styling for the extension UI -->
   <link rel="stylesheet" href="popup.css">
+
+  <!-- logic controlling this popup UI (syncs with background.js) -->
   <script src="popup.js" defer></script>
 </head>
 <body>
   <div class="popup-container">
 
-    <!-- Header: Name + toggle -->
+    <!-- Header section: extension title + ON/OFF toggle -->
     <div class="header">
       <h1 class="title">🍪 CookiesShallNotPass</h1>
+
+      <!-- Master extension activation switch -->
       <label class="switch">
         <input type="checkbox" id="extensionToggle" checked>
         <span class="slider round"></span>
       </label>
     </div>
 
-    <!-- Stats -->
+    <!-- Stats section showing live counters pulled from background.js -->
     <div class="stats">
       <div class="stat">
         <span class="stat-number" id="blockedCount">0</span>
@@ -35,16 +41,18 @@
       </div>
     </div>
 
-    <!-- Current site -->
+    <!-- Current site card: controls per-domain whitelist / block -->
     <div class="current-site stats">
       <div class="site-name">Current Site: <span id="currentSite">Loading...</span></div>
+
+      <!-- buttons send messages to background.js to modify domain lists -->
       <div class="site-buttons">
         <button id="whitelistBtn" class="btn white">Add to Whitelist</button>
         <button id="blockBtn" class="btn red">Block</button>
       </div>
     </div>
 
-    <!-- Dashboard button -->
+    <!-- direct shortcut to the dashboard full settings page -->
     <div class="dashboard">
       <button id="dashboardBtn" class="btn white">Go to Dashboard</button>
     </div>
