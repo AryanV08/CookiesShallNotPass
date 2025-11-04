@@ -1,31 +1,37 @@
 import { expect } from 'chai';
-import '../../background.js';
+import { initBackground } from '../../background.js';
+
+// helper: route a message through the runtime mock
+const send = (msg) => new Promise(resolve => chrome.runtime.sendMessage(msg, resolve));
 
 describe('background message router', () => {
-  beforeEach(() => {
-    chrome.storage._local = {};
-    chrome.tabs._sent = [];
+  beforeEach(async () => {
+    // reset mock storage/tab state
+    if (chrome.storage.__local) {
+      for (const k of Object.keys(chrome.storage.__local)) delete chrome.storage.__local[k];
+    }
+    if (chrome.tabs && Array.isArray(chrome.tabs._sent)) chrome.tabs._sent.length = 0;
+
+    // init background listeners
+    await initBackground(chrome);
   });
 
-  it('handles GET_STATE', (done) => {
-    const sendResponse = (resp) => {
-      try {
-        expect(resp.success).to.equal(true);
-        expect(resp.state).to.be.an('object');
-        done();
-      } catch (e) { done(e); }
-    };
-    chrome.runtime.onMessage._dispatch({ type: 'GET_STATE' }, {}, sendResponse);
+  it('handles GET_STATE', async () => {
+    const res = await send({ type: 'GET_STATE' });
+    expect(res).to.have.property('success', true);
+    expect(res).to.have.property('state');
+    expect(res.state).to.include.all.keys(
+      'blocked','allowed','bannersRemoved','blacklist','whitelist','active','autoBlock'
+    );
   });
 
-  it('handles SET_WHITELIST', (done) => {
-    const sendResponse = (resp) => {
-      try {
-        expect(resp.ok).to.equal(true);
-        expect(chrome.storage._local.whitelist).to.be.an('array');
-        done();
-      } catch (e) { done(e); }
-    };
-    chrome.runtime.onMessage._dispatch({ type: 'SET_WHITELIST', payload: ['example.com'] }, {}, sendResponse);
+  it('handles WHITELIST_SITE (not SET_WHITELIST)', async () => {
+    const add = await send({ type: 'WHITELIST_SITE', domain: 'example.com' });
+    expect(add.success).to.equal(true);
+    expect(add.stats.whitelist).to.include('example.com');
+    expect(add.stats.blacklist).to.not.include('example.com');
+
+    const res = await send({ type: 'GET_STATE' });
+    expect(res.state.whitelist).to.include('example.com'); // persisted
   });
 });
