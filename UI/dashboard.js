@@ -154,5 +154,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   await updateUI();
+ 
+const IS_TEST = typeof window !== 'undefined' && window.__TEST__;
+if (!IS_TEST) {
   setInterval(updateUI, 5000);
+}
 });
