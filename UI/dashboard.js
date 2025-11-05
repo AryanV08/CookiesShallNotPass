@@ -1,4 +1,6 @@
+// Run script after DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
+  // Get references to DOM elements
   const whitelistEl = document.getElementById("whitelist");
   const blacklistEl = document.getElementById("blacklist");
   const whitelistInput = document.getElementById("whitelistInput");
@@ -17,18 +19,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const importBtn = document.getElementById("importBtn");
   const exportBtn = document.getElementById("exportBtn");
 
-  // const bugSiteEl = document.getElementById("bugSite");
-  // const bugDescEl = document.getElementById("bugDesc");
-  // const reportBtn = document.getElementById("reportBtn");
-
+// Helpers to interact with background script
   async function fetchState() {
+    // Ask background script for current state
     return new Promise(resolve => chrome.runtime.sendMessage({ type: "GET_STATE" }, res => resolve(res?.state)));
   }
 
   async function updateState(newState) {
+    // Send updated state to background script
     return new Promise(resolve => chrome.runtime.sendMessage({ type: "UPDATE_STATE", state: newState }, res => resolve(res)));
   }
 
+  // Update whitelist and blacklist UI
   function updateListsUI(state) {
   const whitelistHeading = document.getElementById("whitelistHeading");
   const blacklistHeading = document.getElementById("blacklistHeading");
@@ -43,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const li = document.createElement('li');
     li.textContent = site;
     const btn = document.createElement('button');
-    btn.textContent = '❌';
+    btn.textContent = '❌'; // Remove button
     btn.onclick = async () => {
       state.whitelist = state.whitelist.filter(s => s !== site);
       await updateState(state);
@@ -59,7 +61,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const li = document.createElement('li');
     li.textContent = site;
     const btn = document.createElement('button');
-    btn.textContent = '❌';
+    btn.textContent = '❌'; // Remove button
     btn.onclick = async () => {
       state.blacklist = state.blacklist.filter(s => s !== site);
       await updateState(state);
@@ -70,21 +72,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 }
 
+  // Update the entire UI 
   async function updateUI() {
   const state = await fetchState();
     if (state) {
+      // Update stats
       totalBlockedEl.textContent = state.blocked ?? 0;
       totalAllowedEl.textContent = state.allowed ?? 0;
       totalBannersEl.textContent = state.bannersRemoved ?? 0;
     }
   
     if (state) {
+      // Update toggles and lists
       autoBlockToggle.checked = state.autoBlock;
       blockerActiveToggle.checked = state.active;
       updateListsUI(state);
     }
   }
 
+  // Event listeners for toggles and buttons
   autoBlockToggle.addEventListener("change", async () => {
     const state = await fetchState();
     if (!state) return;
@@ -99,6 +105,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await updateState(state);
   });
 
+  // Add site to whitelist
   addWhitelistBtn.onclick = async () => {
     const site = whitelistInput.value.trim();
     if (!site) return;
@@ -109,6 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateListsUI(state);
   };
 
+  // Add site to blacklist
   addBlacklistBtn.onclick = async () => {
     const site = blacklistInput.value.trim();
     if (!site) return;
@@ -119,6 +127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateListsUI(state);
   };
 
+  // Import list from JSON file
   importBtn.onclick = async () => {
     const file = importFileEl.files[0];
     if (!file) return alert("Select a file first");
@@ -133,6 +142,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch(e) { alert("Invalid file format"); }
   };
 
+  // Export list to JSON file
   exportBtn.onclick = async () => {
     const state = await fetchState();
     const blob = new Blob([JSON.stringify({ whitelist: state.whitelist, blacklist: state.blacklist })], { type: "application/json" });
@@ -143,18 +153,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     URL.revokeObjectURL(url);
   };
 
-  // reportBtn.onclick = () => {
-  //   const site = bugSiteEl.value.trim();
-  //   const desc = bugDescEl.value.trim();
-  //   if (!site || !desc) return alert("Fill both fields");
-  //   console.log("Bug reported:", { site, desc });
-  //   alert("Thank you! Bug reported.");
-  //   bugSiteEl.value = '';
-  //   bugDescEl.value = '';
-  // };
-
+  // Initial UI update on load
   await updateUI();
  
+  // Periodic UI updates every 5 seconds (disabled during tests)
 const IS_TEST = typeof window !== 'undefined' && window.__TEST__;
 if (!IS_TEST) {
   setInterval(updateUI, 5000);
