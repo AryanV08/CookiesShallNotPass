@@ -88,9 +88,13 @@ describe('Dashboard UI', () => {
     expect(document.getElementById('autoBlockToggle').checked).to.equal(false);
     expect(document.getElementById('blockerActiveToggle').checked).to.equal(true);
 
-    // Your JS sets: "Whitelist (n)" / "Blacklist (n)"
-    expect(document.getElementById('whitelistHeading').textContent).to.match(/Whitelist \(\d+\)/);
-    expect(document.getElementById('blacklistHeading').textContent).to.match(/Blacklist \(\d+\)/);
+    // Metric pills display the counts
+    const whitelistCountText = document.getElementById('whitelistCount').textContent;
+    const blacklistCountText = document.getElementById('blacklistCount').textContent;
+    expect(whitelistCountText).to.match(/^\d+$/);
+    expect(blacklistCountText).to.match(/^\d+$/);
+    expect(Number(whitelistCountText)).to.equal(state.whitelist.length);
+    expect(Number(blacklistCountText)).to.equal(state.blacklist.length);
 
     const wl = [...document.getElementById('whitelist').querySelectorAll('li')].map(li => li.firstChild.textContent);
     const bl = [...document.getElementById('blacklist').querySelectorAll('li')].map(li => li.firstChild.textContent);
@@ -133,7 +137,9 @@ describe('Dashboard UI', () => {
 
     const items = [...list.querySelectorAll('li')].map(li => li.firstChild.textContent);
     expect(items).to.deep.equal(['alpha.com', 'example.com']);
-    expect(document.getElementById('whitelistHeading').textContent).to.match(/Whitelist \(2\)/);
+    const countText = document.getElementById('whitelistCount').textContent;
+    expect(countText).to.match(/^\d+$/);
+    expect(Number(countText)).to.equal(2);
   });
 
   it('removing a whitelist item (❌) updates DOM and heading count', async () => {
@@ -146,7 +152,9 @@ describe('Dashboard UI', () => {
 
     const items = [...list.querySelectorAll('li')].map(li => li.firstChild.textContent);
     expect(items).to.deep.equal([]);
-    expect(document.getElementById('whitelistHeading').textContent).to.match(/Whitelist \(0\)/);
+    const countText = document.getElementById('whitelistCount').textContent;
+    expect(countText).to.match(/^\d+$/);
+    expect(Number(countText)).to.equal(0);
   });
 
   it('adding to blacklist updates DOM and heading count', async () => {
@@ -162,6 +170,8 @@ describe('Dashboard UI', () => {
 
     const items = [...list.querySelectorAll('li')].map(li => li.firstChild.textContent);
     expect(items).to.deep.equal(['beta.com', 'tracker.com']);
-    expect(document.getElementById('blacklistHeading').textContent).to.match(/Blacklist \(2\)/);
+    const countText = document.getElementById('blacklistCount').textContent;
+    expect(countText).to.match(/^\d+$/);
+    expect(Number(countText)).to.equal(2);
   });
 });
