@@ -350,24 +350,63 @@ button.secondary:hover {
   padding-left: 18px;
 }
 
-/* Report form */
-.report-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+/* Report link styles */
+/* Split the report section into two cards */
+.report-split {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
 }
 
-.form-group {
-  flex: 1 1 200px;
-  display: flex;
-  flex-direction: column;
+.report-card {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  padding: 12px;
 }
 
-.form-group label {
-  font-weight: bold;
+/* Link + helper text */
+.report-instructions {
   font-size: 13px;
-  margin-bottom: 4px;
+  line-height: 1.5;
+  color: #d6dcf5;
+  margin-top: 8px;
 }
+
+.report-link {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.report-link:hover {
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+.clone-help summary {
+  cursor: pointer;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.code-block {
+  background: rgba(255,255,255,0.08);
+  padding: 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  color: #fff;
+}
+
+/* Two columns on wider views */
+@media (min-width: 600px) {
+  .report-split {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+/* End report link styles */
+
 
 /* Responsive tweaks */
 @media (min-width: 600px) {

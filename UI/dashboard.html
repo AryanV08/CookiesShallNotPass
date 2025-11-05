@@ -125,21 +125,50 @@
       </div>
     </section>
 
+
+    
     <section class="report" id="reportSection">
-      <h2>Report a Bug</h2>
-      <p class="section-subtitle">Spotted a banner that slipped through or a site behaving strangely? Let us know.</p>
-      <div class="report-grid">
-        <div class="form-group">
-          <label for="bugSite">Affected site</label>
-          <input type="text" id="bugSite" placeholder="e.g. news.example.com">
+      <h2>Support</h2>
+
+      <!-- Report and Code -->
+      <div class="report-split">
+        <!-- LEFT: Report a Bug -->
+        <div class="report-card">
+          <h3>Report a Bug</h3>
+          <p class="section-subtitle">
+            Spotted a banner that slipped through or a site behaving strangely?
+          </p>
+          <p class="report-instructions">
+            Click
+            <a id="reportLink" class="report-link"
+              href="https://forms.gle/PVQQTFvmCxT3DTET9"
+              target="_blank" rel="noopener noreferrer">Report a bug</a>
+            to open the Google Form and describe the issue.
+          </p>
         </div>
-        <div class="form-group">
-          <label for="bugDesc">Description</label>
-          <textarea id="bugDesc" placeholder="Provide details so we can reproduce the issue."></textarea>
+
+        <!-- RIGHT: View Source -->
+        <div class="report-card">
+          <h3>View Source Code</h3>
+          <p class="section-subtitle">
+            Browse the code or clone the repository locally.
+          </p>
+          <p class="report-instructions">
+            Click
+            <a id="sourceLink" class="report-link"
+              href="https://github.com/AryanV08/CookiesShallNotPass"
+              target="_blank" rel="noopener noreferrer">View Source</a>
+            to open the official GitHub repository in a new tab.
+          </p>
+          <details class="clone-help">
+            <summary>Clone via HTTPS</summary>
+            <pre class="code-block">git clone https://github.com/AryanV08/CookiesShallNotPass.git
+    cd CookiesShallNotPass</pre>
+          </details>
         </div>
       </div>
-      <button id="reportBtn">Submit</button>
     </section>
+
 
   </div>
 </body>

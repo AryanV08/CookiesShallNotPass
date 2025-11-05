@@ -17,9 +17,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const importBtn = document.getElementById("importBtn");
   const exportBtn = document.getElementById("exportBtn");
 
-  const bugSiteEl = document.getElementById("bugSite");
-  const bugDescEl = document.getElementById("bugDesc");
-  const reportBtn = document.getElementById("reportBtn");
+  // const bugSiteEl = document.getElementById("bugSite");
+  // const bugDescEl = document.getElementById("bugDesc");
+  // const reportBtn = document.getElementById("reportBtn");
 
   async function fetchState() {
     return new Promise(resolve => chrome.runtime.sendMessage({ type: "GET_STATE" }, res => resolve(res?.state)));
@@ -143,15 +143,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     URL.revokeObjectURL(url);
   };
 
-  reportBtn.onclick = () => {
-    const site = bugSiteEl.value.trim();
-    const desc = bugDescEl.value.trim();
-    if (!site || !desc) return alert("Fill both fields");
-    console.log("Bug reported:", { site, desc });
-    alert("Thank you! Bug reported.");
-    bugSiteEl.value = '';
-    bugDescEl.value = '';
-  };
+  // reportBtn.onclick = () => {
+  //   const site = bugSiteEl.value.trim();
+  //   const desc = bugDescEl.value.trim();
+  //   if (!site || !desc) return alert("Fill both fields");
+  //   console.log("Bug reported:", { site, desc });
+  //   alert("Thank you! Bug reported.");
+  //   bugSiteEl.value = '';
+  //   bugDescEl.value = '';
+  // };
 
   await updateUI();
  
