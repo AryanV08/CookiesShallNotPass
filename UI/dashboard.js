@@ -31,13 +31,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Update whitelist and blacklist UI
-  function updateListsUI(state) {
-  const whitelistHeading = document.getElementById("whitelistHeading");
-  const blacklistHeading = document.getElementById("blacklistHeading");
+function updateListsUI(state) {
+  const whitelistCountEl = document.getElementById("whitelistCount");
+  const blacklistCountEl = document.getElementById("blacklistCount");
 
-  // Update headings with counts
-  whitelistHeading.textContent = `Whitelist (${state.whitelist.length})`;
-  blacklistHeading.textContent = `Blacklist (${state.blacklist.length})`;
+  const whitelistCount = state.whitelist.length;
+  const blacklistCount = state.blacklist.length;
+
+  if (whitelistCountEl) {
+    whitelistCountEl.textContent = whitelistCount;
+    const pill = whitelistCountEl.closest(".metric-pill");
+    if (pill) {
+      pill.setAttribute("aria-label", `Whitelisted sites: ${whitelistCount}`);
+    }
+  }
+  if (blacklistCountEl) {
+    blacklistCountEl.textContent = blacklistCount;
+    const pill = blacklistCountEl.closest(".metric-pill");
+    if (pill) {
+      pill.setAttribute("aria-label", `Blacklisted sites: ${blacklistCount}`);
+    }
+  }
 
   // Update whitelist items
   whitelistEl.innerHTML = '';
