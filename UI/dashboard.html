@@ -2,22 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!-- Ensures proper scaling on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CookiesShallNotPass Dashboard</title>
+  <!-- Link to external CSS file -->
   <link rel="stylesheet" href="dashboard.css">
+  <!-- Link to external JavaScript file -->
   <script src="dashboard.js" defer></script>
 </head>
 <body>
   <div class="dashboard-container">
+    <!-- Dashboard Header -->
     <header class="dashboard-header" id="overview">
       <h1>CookiesShallNotPass Dashboard</h1>
       <p class="tagline">Review your protection status, tune automation controls, and manage every advanced tool in one place.</p>
     </header>
 
+    <!-- Protection Controls Section -->
     <section class="prefs" id="controlsSection">
       <h2>Protection Controls</h2>
       <p class="section-subtitle">Adjust the global switches that determine how cookies are handled across every site.</p>
       <div class="toggle-grid">
+        <!-- Auto-Blocking Toggle -->
         <div class="toggle-card">
           <div class="toggle-text">
             <span class="toggle-title">Auto-Blocking</span>
@@ -28,6 +34,7 @@
             <span class="slider round"></span>
           </label>
         </div>
+        <!-- Blocker Active Toggle -->
         <div class="toggle-card">
           <div class="toggle-text">
             <span class="toggle-title">Blocker Active</span>
@@ -41,17 +48,21 @@
       </div>
     </section>
 
+    <!-- Activity Stats Section -->
     <section class="stats" id="statsSection">
       <h2>Activity Overview</h2>
       <div class="stat-grid">
+        <!-- Total Cookies Blocked -->
         <div class="stat-card">
           <span class="stat-number" id="totalBlocked">0</span>
           <span class="stat-label">Cookies Blocked</span>
         </div>
+        <!-- Total Cookies Allowed -->
         <div class="stat-card">
           <span class="stat-number" id="totalAllowed">0</span>
           <span class="stat-label">Cookies Allowed</span>
         </div>
+        <!-- Total Banners Removed -->
         <div class="stat-card">
           <span class="stat-number" id="totalBanners">0</span>
           <span class="stat-label">Banners Removed</span>
@@ -59,12 +70,14 @@
       </div>
     </section>
 
+    <!-- Site Lists Section -->
     <section class="lists" id="listsSection">
       <header class="section-heading">
         <div>
           <h2>Site Lists</h2>
           <p class="section-subtitle">Fine-tune which domains stay clean or are allowed to set cookies.</p>
         </div>
+        <!-- Display counts of whitelist and blacklist-->
         <div class="list-metrics">
           <div class="metric-pill">
             <span class="metric-value" id="whitelistCount">0</span>
@@ -77,6 +90,7 @@
         </div>
       </header>
 
+      <!-- Recent Edits Preview -->
       <div class="list-preview-row">
         <div class="list-preview-card">
           <h3>Recent Whitelist</h3>
@@ -88,13 +102,16 @@
         </div>
       </div>
 
+      <!-- Full Lists Management -->
       <div class="list-container">
+        <!-- Whitelist Management -->
         <div>
           <h3 id="whitelistHeading">Whitelist</h3>
           <ul id="whitelist"></ul>
           <input type="text" id="whitelistInput" placeholder="Add site">
           <button id="addWhitelistBtn">Add</button>
         </div>
+        <!-- Blacklist Management -->
         <div>
           <h3 id="blacklistHeading">Blacklist</h3>
           <ul id="blacklist"></ul>
@@ -105,10 +122,12 @@
       <p class="section-footnote">Tip: enter domains without protocol (for example: example.com).</p>
     </section>
 
+    <!-- Import & Export Section -->
     <section class="import-export" id="importExportSection">
       <h2>Import &amp; Export Lists</h2>
       <p class="section-subtitle">Back up your configuration or share it with teammates using the JSON format.</p>
       <div class="import-grid">
+        <!-- File input and buttons -->
         <div class="import-controls">
           <input type="file" id="importFile" accept="application/json">
           <div class="button-row">
@@ -116,6 +135,7 @@
             <button id="exportBtn" class="secondary">Export Current Lists</button>
           </div>
         </div>
+        <!-- Import/Export Help Text -->
         <div class="import-help">
           <ul>
             <li>Import files created by this extension to sync across browsers.</li>
@@ -126,7 +146,7 @@
     </section>
 
 
-    
+    <!-- Support & Source Code Section -->
     <section class="report" id="reportSection">
       <h2>Support</h2>
 
@@ -160,6 +180,7 @@
               target="_blank" rel="noopener noreferrer">View Source</a>
             to open the official GitHub repository in a new tab.
           </p>
+          <!-- Git clone instructions -->
           <details class="clone-help">
             <summary>Clone via HTTPS</summary>
             <pre class="code-block">git clone https://github.com/AryanV08/CookiesShallNotPass.git
