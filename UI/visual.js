@@ -1,5 +1,5 @@
 // D3.js visualization setup and functions
-import * as d3 from "./d3.min.js";
+
 function initializeVisualization() {
   const container = document.querySelector('.visualization-container');
   const margin = { top: 20, right: 100, bottom: 30, left: 250 };
