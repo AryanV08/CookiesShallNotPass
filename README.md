@@ -1,5 +1,5 @@
 # CookiesShallNotPass
- **User Manual** → [Click here to read](https://github.com/AryanV08/CookiesShallNotPass/blob/main/USER_MANUAL.md) 
+ **User Manual** → [Click here to read](https://github.com/AryanV08/CookiesShallNotPass/blob/main/USER_MANUAL.md) <br>
 https://docs.google.com/document/d/1R5Id1T55_5p5VXkm01wkKMt5dcFOs73_QjcVSLOnhEg/edit?tab=t.0
  
 **Team Members**
