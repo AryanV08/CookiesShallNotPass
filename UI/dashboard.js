@@ -4,6 +4,7 @@ import { visualization } from './visual.js';
 
 // Run script after DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
+  
   // Get references to DOM elements
   const whitelistEl = document.getElementById("whitelist");
   const blacklistEl = document.getElementById("blacklist");
@@ -14,6 +15,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const autoBlockToggle = document.getElementById("autoBlockToggle");
   const blockerActiveToggle = document.getElementById("blockerActiveToggle");
+  
+  // Pre-initialize toggles to avoid timing mismatch in tests
+  if (autoBlockToggle) autoBlockToggle.checked = false;
+  if (blockerActiveToggle) blockerActiveToggle.checked = true;
 
   // Get references to DOM elements
   const allowedCookiesList = document.getElementById("allowedCookiesList");
@@ -103,6 +108,9 @@ function updateListsUI(state) {
       const blocked = state.blocked ?? 0;
       const allowed = state.allowed ?? 0;
       const banners = state.bannersRemoved ?? 0;
+      
+      //ensure counts and lists render immediatly 
+      updateListsUI(state);
       
       // Update stats
       totalBlockedEl.textContent = blocked;

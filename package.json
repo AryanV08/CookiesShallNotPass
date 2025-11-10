@@ -6,10 +6,10 @@
     "jsdom-global": "^3.0.2",
     "mocha": "^11.7.4"
   },
-"scripts": {
-  "test": "mocha --require jsdom-global/register --require ./tests/setup/globals.js \"tests/**/*.test.js\""
+  "scripts": {
+    "test": "mocha --require jsdom-global/register --require ./tests/setup/globals.js \"tests/**/*.test.js\""
+  },
+  "dependencies": {
+    "d3": "^7.9.0"
+  }
 }
-
-
-}
-
