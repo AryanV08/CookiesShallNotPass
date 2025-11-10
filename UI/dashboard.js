@@ -1,11 +1,10 @@
+
 // Import visualization module
 import { visualization } from './visual.js';
 
 // Run script after DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
-  // Persistent state shared across handlers
-  let state = await fetchState();
-
+  
   // Get references to DOM elements
   const whitelistEl = document.getElementById("whitelist");
   const blacklistEl = document.getElementById("blacklist");
@@ -16,166 +15,204 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const autoBlockToggle = document.getElementById("autoBlockToggle");
   const blockerActiveToggle = document.getElementById("blockerActiveToggle");
+  
+  // Pre-initialize toggles to avoid timing mismatch in tests
+  if (autoBlockToggle) autoBlockToggle.checked = false;
+  if (blockerActiveToggle) blockerActiveToggle.checked = true;
 
-  // Pre-initialize toggles
-  if (autoBlockToggle) autoBlockToggle.checked = state?.autoBlock ?? false;
-  if (blockerActiveToggle) blockerActiveToggle.checked = state?.active ?? true;
-
+  // Get references to DOM elements
   const allowedCookiesList = document.getElementById("allowedCookiesList");
   const blockedCookiesList = document.getElementById("blockedCookiesList");
+
   const totalBlockedEl = document.getElementById("totalBlocked");
   const totalAllowedEl = document.getElementById("totalAllowed");
   const totalBannersEl = document.getElementById("totalBanners");
+
   const importFileEl = document.getElementById("importFile");
   const importBtn = document.getElementById("importBtn");
   const exportBtn = document.getElementById("exportBtn");
 
-  // Helpers
+  
+
+// Helpers to interact with background script
   async function fetchState() {
-    return new Promise(resolve =>
-      chrome.runtime.sendMessage({ type: "GET_STATE" }, res => resolve(res?.state))
-    );
+    // Ask background script for current state
+    return new Promise(resolve => chrome.runtime.sendMessage({ type: "GET_STATE" }, res => resolve(res?.state)));
   }
 
   async function updateState(newState) {
-    return new Promise(resolve =>
-      chrome.runtime.sendMessage({ type: "UPDATE_STATE", state: newState }, res => resolve(res))
-    );
+    // Send updated state to background script
+    return new Promise(resolve => chrome.runtime.sendMessage({ type: "UPDATE_STATE", state: newState }, res => resolve(res)));
   }
 
-  // Update whitelist/blacklist UI
-  function updateListsUI(state) {
-    const whitelistCountEl = document.getElementById("whitelistCount");
-    const blacklistCountEl = document.getElementById("blacklistCount");
-    const whitelistCount = state.whitelist.length;
-    const blacklistCount = state.blacklist.length;
+  // Update whitelist and blacklist UI
+function updateListsUI(state) {
+  const whitelistCountEl = document.getElementById("whitelistCount");
+  const blacklistCountEl = document.getElementById("blacklistCount");
 
-    if (whitelistCountEl) whitelistCountEl.textContent = whitelistCount;
-    if (blacklistCountEl) blacklistCountEl.textContent = blacklistCount;
+  const whitelistCount = state.whitelist.length;
+  const blacklistCount = state.blacklist.length;
 
-    whitelistEl.innerHTML = '';
-    state.whitelist.forEach(site => {
-      const li = document.createElement('li');
-      li.textContent = site;
-      const btn = document.createElement('button');
-      btn.textContent = '❌';
-      btn.onclick = async () => {
-        state.whitelist = state.whitelist.filter(s => s !== site);
-        await updateState(state);
-        updateListsUI(state);
-      };
-      li.appendChild(btn);
-      whitelistEl.appendChild(li);
-    });
-
-    blacklistEl.innerHTML = '';
-    state.blacklist.forEach(site => {
-      const li = document.createElement('li');
-      li.textContent = site;
-      const btn = document.createElement('button');
-      btn.textContent = '❌';
-      btn.onclick = async () => {
-        state.blacklist = state.blacklist.filter(s => s !== site);
-        await updateState(state);
-        updateListsUI(state);
-      };
-      li.appendChild(btn);
-      blacklistEl.appendChild(li);
-    });
+  if (whitelistCountEl) {
+    whitelistCountEl.textContent = whitelistCount;
+    const pill = whitelistCountEl.closest(".metric-pill");
+    if (pill) {
+      pill.setAttribute("aria-label", `Whitelisted sites: ${whitelistCount}`);
+    }
+  }
+  if (blacklistCountEl) {
+    blacklistCountEl.textContent = blacklistCount;
+    const pill = blacklistCountEl.closest(".metric-pill");
+    if (pill) {
+      pill.setAttribute("aria-label", `Blacklisted sites: ${blacklistCount}`);
+    }
   }
 
-  // Update entire UI
+  // Update whitelist items
+  whitelistEl.innerHTML = '';
+  state.whitelist.forEach(site => {
+    const li = document.createElement('li');
+    li.textContent = site;
+    const btn = document.createElement('button');
+    btn.textContent = '❌'; // Remove button
+    btn.onclick = async () => {
+      state.whitelist = state.whitelist.filter(s => s !== site);
+      await updateState(state);
+      updateListsUI(state);
+    };
+    li.appendChild(btn);
+    whitelistEl.appendChild(li);
+  });
+
+  // Update blacklist items
+  blacklistEl.innerHTML = '';
+  state.blacklist.forEach(site => {
+    const li = document.createElement('li');
+    li.textContent = site;
+    const btn = document.createElement('button');
+    btn.textContent = '❌'; // Remove button
+    btn.onclick = async () => {
+      state.blacklist = state.blacklist.filter(s => s !== site);
+      await updateState(state);
+      updateListsUI(state);
+    };
+    li.appendChild(btn);
+    blacklistEl.appendChild(li);
+  });
+}
+
+  // Update the entire UI 
   async function updateUI() {
-    state = await fetchState(); // refresh shared state
-    if (!state) return;
+  const state = await fetchState();
+    if (state) {
+      const blocked = state.blocked ?? 0;
+      const allowed = state.allowed ?? 0;
+      const banners = state.bannersRemoved ?? 0;
+      
+      //ensure counts and lists render immediatly 
+      updateListsUI(state);
+      
+      // Update stats
+      totalBlockedEl.textContent = blocked;
+      totalAllowedEl.textContent = allowed;
+      totalBannersEl.textContent = banners;
 
-    totalBlockedEl.textContent = state.blocked ?? 0;
-    totalAllowedEl.textContent = state.allowed ?? 0;
-    totalBannersEl.textContent = state.bannersRemoved ?? 0;
+      // Update visualization
+      visualization.updateChart(state);
+      // Update allowed cookies list
+      allowedCookiesList.innerHTML = '';
+      for (const [domain, cookies] of Object.entries(state.allowedCookies)) {
+        const li = document.createElement('li');
+        li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
+        allowedCookiesList.appendChild(li);
+      }
 
-    updateListsUI(state);
-    visualization.updateChart(state);
-
-    allowedCookiesList.innerHTML = '';
-    for (const [domain, cookies] of Object.entries(state.allowedCookies || {})) {
-      const li = document.createElement('li');
-      li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
-      allowedCookiesList.appendChild(li);
+      // Update blocked cookies list
+      blockedCookiesList.innerHTML = '';
+      for (const [domain, cookies] of Object.entries(state.blockedCookies)) {
+        const li = document.createElement('li');
+        li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
+        blockedCookiesList.appendChild(li);
+      }
     }
-
-    blockedCookiesList.innerHTML = '';
-    for (const [domain, cookies] of Object.entries(state.blockedCookies || {})) {
-      const li = document.createElement('li');
-      li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
-      blockedCookiesList.appendChild(li);
+  
+    if (state) {
+      // Update toggles and lists
+      autoBlockToggle.checked = state.autoBlock;
+      blockerActiveToggle.checked = state.active;
+      updateListsUI(state);
     }
-
-    autoBlockToggle.checked = state.autoBlock;
-    blockerActiveToggle.checked = state.active;
   }
 
-  // Event listeners
+  // Event listeners for toggles and buttons
   autoBlockToggle.addEventListener("change", async () => {
+    const state = await fetchState();
     if (!state) return;
     state.autoBlock = autoBlockToggle.checked;
     await updateState(state);
-    autoBlockToggle.checked = state.autoBlock; // optimistic update
   });
 
   blockerActiveToggle.addEventListener("change", async () => {
+    const state = await fetchState();
     if (!state) return;
     state.active = blockerActiveToggle.checked;
     await updateState(state);
-    blockerActiveToggle.checked = state.active;
   });
 
+  // Add site to whitelist
   addWhitelistBtn.onclick = async () => {
     const site = whitelistInput.value.trim();
     if (!site) return;
+    const state = await fetchState();
     if (!state.whitelist.includes(site)) state.whitelist.push(site);
     whitelistInput.value = '';
     await updateState(state);
     updateListsUI(state);
   };
 
+  // Add site to blacklist
   addBlacklistBtn.onclick = async () => {
     const site = blacklistInput.value.trim();
     if (!site) return;
+    const state = await fetchState();
     if (!state.blacklist.includes(site)) state.blacklist.push(site);
     blacklistInput.value = '';
     await updateState(state);
     updateListsUI(state);
   };
 
+  // Import list from JSON file
   importBtn.onclick = async () => {
     const file = importFileEl.files[0];
     if (!file) return alert("Select a file first");
     const text = await file.text();
     try {
       const obj = JSON.parse(text);
+      const state = await fetchState();
       state.whitelist = obj.whitelist || state.whitelist;
       state.blacklist = obj.blacklist || state.blacklist;
       await updateState(state);
       updateListsUI(state);
-    } catch {
-      alert("Invalid file format");
-    }
+    } catch(e) { alert("Invalid file format"); }
   };
 
+  // Export list to JSON file
   exportBtn.onclick = async () => {
+    const state = await fetchState();
     const blob = new Blob([JSON.stringify({ whitelist: state.whitelist, blacklist: state.blacklist })], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = 'csp_lists.json';
+    a.href = url; a.download = 'csp_lists.json';
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Initial load
+  // Initial UI update on load
   await updateUI();
-
-  // Periodic refresh
-  const IS_TEST = typeof window !== 'undefined' && window.__TEST__;
-  if (!IS_TEST) setInterval(updateUI, 5000);
+ 
+  // Periodic UI updates every 5 seconds (disabled during tests)
+const IS_TEST = typeof window !== 'undefined' && window.__TEST__;
+if (!IS_TEST) {
+  setInterval(updateUI, 5000);
+}
 });
