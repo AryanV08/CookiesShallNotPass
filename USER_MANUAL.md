@@ -9,7 +9,7 @@ To install the latest published version of the extension, download it from the C
 ---
 
 
-### How to install the software from source(in progress)
+### How to install the software from source
 Since the extension hasn’t been published to the Chrome Web Store yet, you can install it manually from source:
 https://github.com/AryanV08/CookiesShallNotPass/tree/main
 
@@ -19,6 +19,7 @@ https://github.com/AryanV08/CookiesShallNotPass/tree/main
 -Click “Load unpacked” and select the folder containing the extension’s source code.
 -The extension should now appear in your toolbar, ready to use.
 
+---
 
 #### How to run the software
 - Launch Google Chrome  
@@ -28,11 +29,14 @@ https://github.com/AryanV08/CookiesShallNotPass/tree/main
 - Pin CookiesShallNotPass for quick access if desired  
 - Click the extension icon to open the pop-up interface  
 
+---
+
 #### How to use the software
 Once the extension is installed and enabled in Chrome, you can manage it easily through the popup interface and the dashboard.  
 
 This section explains how to use all main features.  
 
+---
 **Opening the Extension Popup**  
 - Click the CookiesShallNotPass icon in the Chrome toolbar.  
 - This opens a compact popup window, your main control center for quick cookie management.  
