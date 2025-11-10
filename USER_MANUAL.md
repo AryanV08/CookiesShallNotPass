@@ -160,25 +160,16 @@ CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Jav
 
 **To build the software:**  
 1. Clone the repository  
-2. Verify the project structure  
-Ensure the following folders are present:  
-- Manifest.json  
-- /ui  
-- /background  
-- /conent  
-- /rulesengine  
-- /storage  
-
-3. Install nodejs 20.x or above at https://nodejs.org/en/download  
-4. Install dependencies with `npm install`  
-5. Load into Chrome for testing  
+2. Install nodejs 20.x or above at https://nodejs.org/en/download  
+3. Install dependencies with `npm install`  
+4. Load into Chrome for testing  
 - Open Chrome -> Settings -> Extensions  
 - Enable Developer mode  
 - Click “Load unpacked”  
 - Select the project folder  
 - The extension icon “CookiesShallNotPass” will appear in the toolbar  
 
-6. Run and verify components  
+5. Run and verify components  
 - Open the popup -> confirm the dashboard and settings load correctly  
 - Modify preferences or import whitelist/blacklist files to confirm UI-backend integration  
 
