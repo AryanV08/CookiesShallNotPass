@@ -3,10 +3,22 @@
 ### High Level Description
 **CookiesShallNotPass** is a chrome extension that automatically manages website cookie preferences. It blocks non-essential cookies, removes intrusive cookie banners, and allows users to whitelist trusted sites or import pre-defined blocklists making cookie management automatic, simple, and private.
 
-### How to install the software
+### How to install the software from Chrome(in progress)
 To install the latest published version of the extension, download it from the Chrome web store.
 
 ---
+
+
+### How to install the software from source(in progress)
+Since the extension hasn’t been published to the Chrome Web Store yet, you can install it manually from source:
+https://github.com/AryanV08/CookiesShallNotPass/tree/main
+
+-Download or clone this repository to your local machine.
+-Open Google Chrome and navigate to chrome://extensions/.
+-Enable Developer mode using the toggle in the top right corner.
+-Click “Load unpacked” and select the folder containing the extension’s source code.
+-The extension should now appear in your toolbar, ready to use.
+
 
 #### How to run the software
 - Launch Google Chrome  
