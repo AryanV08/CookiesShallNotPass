@@ -45,6 +45,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     return new Promise(resolve => chrome.runtime.sendMessage({ type: "UPDATE_STATE", state: newState }, res => resolve(res)));
   }
 
+  async function updateList(listName, transformFn) {
+    const current = await fetchState();
+    if (!current) return;
+    const original = Array.isArray(current[listName]) ? current[listName] : [];
+    const next = transformFn([...original]);
+    if (!next) return;
+    await updateState({ [listName]: next });
+    updateListsUI({ ...current, [listName]: next });
+  }
+
+  async function addSiteToList(listName, site) {
+    const normalized = (site || '').trim();
+    if (!normalized) return;
+    await updateList(listName, list => {
+      if (list.includes(normalized)) return null;
+      list.push(normalized);
+      return list;
+    });
+  }
+
+  async function removeSiteFromList(listName, site) {
+    await updateList(listName, list => list.filter(entry => entry !== site));
+  }
+
   // Update whitelist and blacklist UI
 function updateListsUI(state) {
   const whitelistCountEl = document.getElementById("whitelistCount");
@@ -57,14 +81,14 @@ function updateListsUI(state) {
     whitelistCountEl.textContent = whitelistCount;
     const pill = whitelistCountEl.closest(".metric-pill");
     if (pill) {
-      pill.setAttribute("aria-label", `Whitelisted sites: ${whitelistCount}`);
+      pill.setAttribute("aria-label", "Whitelisted sites: " + whitelistCount);
     }
   }
   if (blacklistCountEl) {
     blacklistCountEl.textContent = blacklistCount;
     const pill = blacklistCountEl.closest(".metric-pill");
     if (pill) {
-      pill.setAttribute("aria-label", `Blacklisted sites: ${blacklistCount}`);
+      pill.setAttribute("aria-label", "Blacklisted sites: " + blacklistCount);
     }
   }
 
@@ -74,12 +98,8 @@ function updateListsUI(state) {
     const li = document.createElement('li');
     li.textContent = site;
     const btn = document.createElement('button');
-    btn.textContent = '❌'; // Remove button
-    btn.onclick = async () => {
-      state.whitelist = state.whitelist.filter(s => s !== site);
-      await updateState(state);
-      updateListsUI(state);
-    };
+    btn.textContent = 'X'; // Remove button
+    btn.onclick = () => removeSiteFromList('whitelist', site);
     li.appendChild(btn);
     whitelistEl.appendChild(li);
   });
@@ -90,12 +110,8 @@ function updateListsUI(state) {
     const li = document.createElement('li');
     li.textContent = site;
     const btn = document.createElement('button');
-    btn.textContent = '❌'; // Remove button
-    btn.onclick = async () => {
-      state.blacklist = state.blacklist.filter(s => s !== site);
-      await updateState(state);
-      updateListsUI(state);
-    };
+    btn.textContent = 'X'; // Remove button
+    btn.onclick = () => removeSiteFromList('blacklist', site);
     li.appendChild(btn);
     blacklistEl.appendChild(li);
   });
@@ -116,7 +132,26 @@ function updateListsUI(state) {
       totalBlockedEl.textContent = blocked;
       totalAllowedEl.textContent = allowed;
       totalBannersEl.textContent = banners;
+       const allowedCookies = state.allowedCookies || {};
+      const blockedCookies = state.blockedCookies || {};
 
+      if (allowedCookiesList) {
+        allowedCookiesList.innerHTML = '';
+        for (const [domain, cookies] of Object.entries(allowedCookies)) {
+          const li = document.createElement('li');
+          li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
+          allowedCookiesList.appendChild(li);
+        }
+      }
+
+      if (blockedCookiesList) {
+        blockedCookiesList.innerHTML = '';
+        for (const [domain, cookies] of Object.entries(blockedCookies)) {
+          const li = document.createElement('li');
+          li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
+          blockedCookiesList.appendChild(li);
+        }
+      }
       // Update visualization
       visualization.updateChart(state);
       // Update allowed cookies list
@@ -161,24 +196,16 @@ function updateListsUI(state) {
 
   // Add site to whitelist
   addWhitelistBtn.onclick = async () => {
-    const site = whitelistInput.value.trim();
-    if (!site) return;
-    const state = await fetchState();
-    if (!state.whitelist.includes(site)) state.whitelist.push(site);
+    const site = whitelistInput.value;
     whitelistInput.value = '';
-    await updateState(state);
-    updateListsUI(state);
+    await addSiteToList('whitelist', site);
   };
 
   // Add site to blacklist
   addBlacklistBtn.onclick = async () => {
-    const site = blacklistInput.value.trim();
-    if (!site) return;
-    const state = await fetchState();
-    if (!state.blacklist.includes(site)) state.blacklist.push(site);
+    const site = blacklistInput.value;
     blacklistInput.value = '';
-    await updateState(state);
-    updateListsUI(state);
+    await addSiteToList('blacklist', site);
   };
 
   // Import list from JSON file
