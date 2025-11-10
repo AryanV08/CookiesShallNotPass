@@ -19,6 +19,7 @@ https://github.com/AryanV08/CookiesShallNotPass/tree/main
 -Click “Load unpacked” and select the folder containing the extension’s source code.
 -The extension should now appear in your toolbar, ready to use.
 
+<img src="./images/load-unpacked.png" alt="How to load unpacked extension" width="300"/>
 ---
 
 #### How to run the software
@@ -44,45 +45,51 @@ This section explains how to use all main features.
 **Popup Features**  
 The popup gives you direct access to essential controls while browsing.  
 
-- **Enable or Disable the Blocker:**  
+
+<img src="./images/popup.png" alt="Popup features" width="300"/>
+
+- **Enable or Disable the Blocker (1):**  
   - Use the turn On/Off toggle to activate or pause cookie blocking.  
   - When enabled, the extension automatically blocks unwanted cookies based on your preferences and lists. When disabled, all cookies will behave normally as in Chrome.  
 
-- **Current Site Display:**  
-  - The popup shows the current website you’re visiting. This helps confirm which site you’re managing before adding it to a list.  
-
-- **Cookie Stats:**  
+- **Cookie Stats (2):**  
   - Cookies Blocked So Far: Number of cookies that have been blocked so far.  
   - Cookies Allowed: Number of cookies permitted so far.  
   - Banners Removed: Number of cookie banners removed so far.  
 
+- **Current Site Display (3):**  
+  - The popup shows the current website you’re visiting. This helps confirm which site you’re managing before adding it to a list.  
+
 **Managing Sites**  
-- **Add to Whitelist:**  
+- **Add to Whitelist (4):**  
   - Click “Add to Whitelist” to allow cookies from the current domain.  
   - Whitelisted sites will bypass the blocker, keeping their cookies active.  
 
-- **Add to Blacklist:**  
+- **Add to Blacklist (5):**  
   - Click “Block” to completely block cookies on the current website.  
   - The site will be added to your blacklist automatically.  
 
 **Dashboard**  
-- Click “Go to Dashboard” in the popup to open the main management panel.  
+- Click “Go to Dashboard (6)” in the popup to open the main management panel.  
 - The dashboard provides advanced tools and customization for your cookie preferences.  
 
-**View and Edit Lists:**  
+<img src="./images/dashboard.png" alt="Dashboard features" width="300"/>
+
+**Edit Preferences (1):**  
+- Manage your extension settings directly from the dashboard.  
+  - Auto-Blocking: Turn automatic cookie blocking on or off globally.  
+  - Blocker Status: Use the turn On/Off toggle to activate or pause cookie blocking. 
+
+**View and Edit Lists (2):**  
 - View all websites you’ve added to your Whitelist and Blacklist.  
 - Add or remove sites manually.  
 
-**Edit Preferences:**  
-- Manage your extension settings directly from the dashboard.  
-  - Auto-Blocking: Turn automatic cookie blocking on or off globally.  
-  - Blocker Status: Use the turn On/Off toggle to activate or pause cookie blocking.  
-
-**Graphical Statistics:**  
+**Graphical Statistics (not implemented yet):**  
 - Visualize your browsing privacy.  
   - Total cookies blocked vs. allowed  
 
 **Import / Export Lists:**  
+<img src="./images/im-export.png" alt="Import/Export features" width="800"/>
 - Import: Upload a TXT or JSON file of sites to whitelist or blacklist.  
 - Export: Download your current lists for backup or sharing across devices.  
 
