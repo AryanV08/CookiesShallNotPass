@@ -1,5 +1,10 @@
+
+// Import visualization module
+import { visualization } from './visual.js';
+
 // Run script after DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
+  
   // Get references to DOM elements
   const whitelistEl = document.getElementById("whitelist");
   const blacklistEl = document.getElementById("blacklist");
@@ -10,6 +15,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const autoBlockToggle = document.getElementById("autoBlockToggle");
   const blockerActiveToggle = document.getElementById("blockerActiveToggle");
+  
+  // Pre-initialize toggles to avoid timing mismatch in tests
+  if (autoBlockToggle) autoBlockToggle.checked = false;
+  if (blockerActiveToggle) blockerActiveToggle.checked = true;
+
+  // Get references to DOM elements
+  const allowedCookiesList = document.getElementById("allowedCookiesList");
+  const blockedCookiesList = document.getElementById("blockedCookiesList");
 
   const totalBlockedEl = document.getElementById("totalBlocked");
   const totalAllowedEl = document.getElementById("totalAllowed");
@@ -18,6 +31,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const importFileEl = document.getElementById("importFile");
   const importBtn = document.getElementById("importBtn");
   const exportBtn = document.getElementById("exportBtn");
+
+  
 
 // Helpers to interact with background script
   async function fetchState() {
@@ -90,10 +105,35 @@ function updateListsUI(state) {
   async function updateUI() {
   const state = await fetchState();
     if (state) {
+      const blocked = state.blocked ?? 0;
+      const allowed = state.allowed ?? 0;
+      const banners = state.bannersRemoved ?? 0;
+      
+      //ensure counts and lists render immediatly 
+      updateListsUI(state);
+      
       // Update stats
-      totalBlockedEl.textContent = state.blocked ?? 0;
-      totalAllowedEl.textContent = state.allowed ?? 0;
-      totalBannersEl.textContent = state.bannersRemoved ?? 0;
+      totalBlockedEl.textContent = blocked;
+      totalAllowedEl.textContent = allowed;
+      totalBannersEl.textContent = banners;
+
+      // Update visualization
+      visualization.updateChart(state);
+      // Update allowed cookies list
+      allowedCookiesList.innerHTML = '';
+      for (const [domain, cookies] of Object.entries(state.allowedCookies)) {
+        const li = document.createElement('li');
+        li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
+        allowedCookiesList.appendChild(li);
+      }
+
+      // Update blocked cookies list
+      blockedCookiesList.innerHTML = '';
+      for (const [domain, cookies] of Object.entries(state.blockedCookies)) {
+        const li = document.createElement('li');
+        li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
+        blockedCookiesList.appendChild(li);
+      }
     }
   
     if (state) {
