@@ -1,7 +1,71 @@
 let nextRuleId = 1000; // dynamic starting ID
 
-// Essential cookies never blocked
-export const ESSENTIAL_COOKIES = ["PHPSESSID", "JSESSIONID", "sessionid", "csrf_token", "auth_token"];
+// Common essential cookie keywords
+const essentialKeywords = ['csrf', 'xsrf', 'session', 'auth', 'user_id', 'lang', 'theme', 'secure', 'prefs', 'sessid', 'ssid', 'user', 'login', 'zipcode', 'country', 'currency','sid'];
+
+// Common non-essential cookies (tracking/advertising)
+const nonEssentialTrackingCookies = [
+  '_ga', '_gid', '_fbp', '_gcl_au', '_ym_uid', '_gaexp', '_fbp','ga', 'track', 'trk', 'ads', 'adid', 'adtrack', 'pixel', 'tag'
+];
+
+// Function to check if a cookie is essential
+export function isEssential(cookie) {
+    return new Promise((resolve) => {
+        // If the cookie name matches a known tracking cookie, it's non-essential
+        const isTrackingCookie = nonEssentialTrackingCookies.some(tracker => cookie.name.toLowerCase().includes(tracker));
+        if (isTrackingCookie) {
+            console.log(`Cookie ${cookie.name} is non-essential (tracking cookie).`);
+            return resolve(false);  // It's a tracking cookie, return false (non-essential)
+        }
+
+        // Check if the cookie name contains any of the essential keywords (e.g., session, auth)
+        const isEssentialByName = essentialKeywords.some(keyword => cookie.name.toLowerCase().includes(keyword));
+        if (isEssentialByName) {
+            console.log(`Cookie ${cookie.name} marked as essential by name.`);
+            return resolve(true);  // It's essential if it matches a keyword in the name
+        }
+
+        // Get the current tab's URL (only works in a context like content or background script)
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const currentTab = tabs[0];  // Get the active tab
+            const currentOrigin = new URL(currentTab.url).origin;  // Get the origin of the tab's URL
+
+            // Check if the cookie is cross-site (third-party)
+            const isCrossSite = cookie.domain && !cookie.domain.includes(currentOrigin);
+            if (isCrossSite) {
+                console.log(`Cookie ${cookie.name} is non-essential (cross-site).`);
+                return resolve(false);  // It's a cross-site cookie, return false (non-essential)
+            }
+
+            // Continue with other essential checks if not cross-site
+            if (cookie.secure && cookie.hostOnly && cookie.httpOnly) {
+                console.log(`Cookie ${cookie.name} is essential because it is secure.`);
+                return resolve(true);  // Essential if it's secure
+            }
+
+            // Check for SameSite, HttpOnly, session cookie, etc...
+            if (cookie.hostOnly && cookie.sameSite && (cookie.sameSite === 'Strict' || cookie.sameSite === 'Lax')) {
+                console.log(`Cookie ${cookie.name} is essential because SameSite is set to ${cookie.sameSite}.`);
+                return resolve(true);
+            }
+
+            if (cookie.httpOnly && cookie.hostOnly) {
+                console.log(`Cookie ${cookie.name} is essential because it is HttpOnly plus HostOnly.`);
+                return resolve(true);
+            }
+
+            if (!cookie.expirationDate) {
+                console.log(`Cookie ${cookie.name} is essential because it is a session cookie.`);
+                return resolve(true);
+            }
+
+            // Default to non-essential if it doesn't match any of the essential criteria
+            console.log(`Cookie ${cookie.name} is non-essential (default).`);
+            return resolve(false);  // Non-essential by default
+        });
+    });
+}
+
 
 // List of known tracker domains to block 
 // Could be expanded or updated as needed
@@ -74,9 +138,9 @@ export function createBlockRule(domain) {
 }
 
 // Function to update the blocking rules dynamically in declarativeNetRequest API
-export async function updateRules() {
+export async function updateRules(state) {
   // Create blocking rules for each tracker domain
-  const rules = TRACKER_DOMAINS.map(d => createBlockRule(d));
+  const rules = state.active ? TRACKER_DOMAINS.map(d => createBlockRule(d)) : [];
   
   // Get the existing dynamic rules (if any) in the system
   const existing = await chrome.declarativeNetRequest.getDynamicRules();
