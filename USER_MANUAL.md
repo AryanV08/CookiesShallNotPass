@@ -66,7 +66,7 @@ The popup gives you direct access to essential controls while browsing.
   - Whitelisted sites will bypass the blocker, keeping their cookies active.  
 
 - **Add to Blacklist (5):**  
-  - Click “Block” to completely block cookies on the current website.  
+  - Click “Block” to completely block non-essential cookies on the current website.  
   - The site will be added to your blacklist automatically.  
 
 **Dashboard**  
