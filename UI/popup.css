@@ -1,10 +1,10 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: system-ui;
   width: 320px; /* popup width */
   margin: 0;
   padding: 20px;
   box-sizing: border-box;
-  background: linear-gradient(135deg, #667eea, #764ba2); /* purple gradient branding */
+  background: #000; /* black background */
   color: #fff; /* default white text */
 }
 
@@ -107,7 +107,7 @@ input:checked + .slider:before {
 /* Current site section */
 .current-site {
   border-radius: 14px;
-  background: rgba(118, 75, 162, 0.55); /* purple glass card */
+  background: rgba(255, 255, 255, 0.18); /* purple glass card */
   padding: 16px;
   display: flex;
   flex-direction: column;

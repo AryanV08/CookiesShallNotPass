@@ -80,7 +80,7 @@ function initializeVisualization() {
 
     const color = d3.scaleOrdinal()
       .domain(['Blocked', 'Allowed'])
-      .range(['#ff6b6b', '#4CAF50']);
+      .range(['#8B0000', '#228B22']);
 
     // Add Y axis
     svg.append('g')
