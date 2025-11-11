@@ -167,34 +167,34 @@ CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Jav
 
 **To build the software:**  
 1. Clone the repository
-- Open a terminal or command prompt and run:
-- `git clone https://github.com/AryanV08/CookiesShallNotPass.git`
-- `cd CookiesShallNotPass`
+  - Open a terminal or command prompt and run:
+  - `git clone https://github.com/AryanV08/CookiesShallNotPass.git`
+  - `cd CookiesShallNotPass`
 2. Find the folder you just cloned.
 3. Verify the project structure (Ensure the following files/folders are present):
-- /ui
-- manifest.json
-- background.js
-- content.js
-- rulesEngine.js
-- storage.js
-- icon.png
+  - /ui
+  - manifest.json
+  - background.js
+  - content.js
+  - rulesEngine.js
+  - storage.js
+  - icon.png
 4. Create a new folder on your desktop and name it “CookiesShallNotPass Extension”.
 5. Copy and paste the previously listed files/folders into the new folder.
 6. Install nodejs 20.x or above at https://nodejs.org/en/download  
 7. Install dependencies with `npm install`  
 8. Load into Chrome for testing  
-- Open Chrome -> Click the three dots in the top right corner and click “Settings” at the bottom of the dropdown -> Click “Extensions” found in the bottom left corner.
-- Enable the “Developer mode” switch in the top right corner. 
-- Click “Load unpacked” in the top left corner.
-- Select the new folder you just created, “CookiesShallNotPass Extension".
-- Click the puzzle piece in the top right corner, and in the dropdown, click the pin icon next to the “CookiesShallNotPass” extension.
-- The extension’s cookie icon will now appear next to the puzzle piece icon.
-- Click the Cookie icon and enable or make sure the toggle switch is green.
+  - Open Chrome -> Click the three dots in the top right corner and click “Settings” at the bottom of the dropdown -> Click “Extensions” found in the bottom left corner.
+  - Enable the “Developer mode” switch in the top right corner. 
+  - Click “Load unpacked” in the top left corner.
+  - Select the new folder you just created, “CookiesShallNotPass Extension".
+  - Click the puzzle piece in the top right corner, and in the dropdown, click the pin icon next to the “CookiesShallNotPass” extension.
+  - The extension’s cookie icon will now appear next to the puzzle piece icon.
+  - Click the Cookie icon and enable or make sure the toggle switch is green.
 
 9. Run and verify components  
-- Open the popup -> confirm the dashboard and settings load correctly  
-- Modify preferences or import whitelist/blacklist files to confirm UI-backend integration  
+  - Open the popup -> confirm the dashboard and settings load correctly  
+  - Modify preferences or import whitelist/blacklist files to confirm UI-backend integration  
 
 ---
 
