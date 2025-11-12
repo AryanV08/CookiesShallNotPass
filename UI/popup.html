@@ -14,7 +14,7 @@
   <div class="popup-container">
 
     <!-- Header section: extension title + ON/OFF toggle -->
-    <div class="header">
+    <div class="panel header">
       <h1 class="title">🍪 CookiesShallNotPass</h1>
 
       <!-- Master extension activation switch -->
@@ -25,7 +25,7 @@
     </div>
 
     <!-- Stats section showing live counters pulled from background.js -->
-    <div class="stats">
+    <div class="panel stats">
       <div class="stat">
         <span class="stat-number" id="blockedCount">0</span>
         <span class="stat-label">Cookies Blocked</span>
@@ -41,7 +41,7 @@
     </div>
 
     <!-- Current site card: controls per-domain whitelist / block -->
-    <div class="current-site stats">
+    <div class="panel current-site">
       <div class="site-name">Current Site: <span id="currentSite">Loading...</span></div>
 
       <!-- buttons send messages to background.js to modify domain lists -->
@@ -52,7 +52,7 @@
     </div>
 
     <!-- direct shortcut to the dashboard full settings page -->
-    <div class="dashboard">
+    <div class="panel dashboard">
       <button id="dashboardBtn" class="btn white">Go to Dashboard</button>
     </div>
 
