@@ -6,7 +6,7 @@ let nextRuleId = 1000; // dynamic starting ID
 // ---- Cookie classification lists ----
 const essentialKeywords = [
   'csrf', 'xsrf', 'session', 'auth', 'user_id', 'lang', 'theme', 'secure',
-  'prefs', 'sessid', 'ssid', 'user', 'login', 'zipcode', 'country', 'currency', 'sid'
+  'prefs', 'sessid', 'ssid', 'user', 'login', 'zipcode', 'country', 'currency', 'sid', 'uid', 'remember', 'verify'
 ];
 
 const nonEssentialTrackingCookies = [
