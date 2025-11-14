@@ -82,7 +82,7 @@ if (typeof window !== 'undefined' && window.__TEST__) {
 
       const color = d3.scaleOrdinal()
         .domain(['Blocked', 'Allowed'])
-        .range(['#1fc9a4', '#e9558a']);
+        .range(['#e9558a', '#1fc9a4']);
 
       svg.append('g')
         .call(d3.axisLeft(y))

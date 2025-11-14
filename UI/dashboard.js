@@ -212,14 +212,19 @@ function updateListsUI(state) {
   importBtn.onclick = async () => {
     const file = importFileEl.files[0];
     if (!file) return alert("Select a file first");
+    const filename = file.name; // Get the file name
     const text = await file.text();
     try {
       const obj = JSON.parse(text);
       const state = await fetchState();
-      state.whitelist = obj.whitelist || state.whitelist;
-      state.blacklist = obj.blacklist || state.blacklist;
+      state.whitelist = Array.from(new Set([...(obj.whitelist || []), ...(state.whitelist || [])]));
+      state.blacklist = Array.from(new Set([...(obj.blacklist || []), ...(state.blacklist || [])]));
       await updateState(state);
       updateListsUI(state);
+      // Clear the file input after importing
+      importFileEl.value = ''; // This removes the file from the input field
+    
+      alert(`Import successful: ${filename}`);
     } catch(e) { alert("Invalid file format"); }
   };
 
