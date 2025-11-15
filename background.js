@@ -269,5 +269,8 @@ export async function initBackground(chromeAPI = chrome) {
 // Auto-init only outside tests
 if (!IN_TEST) {
   console.log('[CSP] background loaded');
-  initBackground().catch(err => console.warn('[CSP] init error', err));
+  initBackground().catch(err => {
+    console.error('[CSP] init error', err);
+    console.error('[CSP] Stack:', err?.stack);
+  });
 }

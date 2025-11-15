@@ -1,7 +1,5 @@
 // rulesEngine.js
 
-import fs from "node:fs";
-
 // ---- Dynamic Rule ID seed ----
 let nextRuleId = 1000; // dynamic starting ID
 
@@ -16,16 +14,8 @@ const nonEssentialTrackingCookies = [
   'trk', 'ads', 'adid', 'adtrack', 'pixel', 'tag'
 ];
 
-// ---- Load tracker domains from file ----
-// This file is from a public tracker list (pgl.yoyo.org) and can be updated as needed.
-const trackerDomainsFromFile = fs.readFileSync('./tracker_domains.txt', 'utf-8')
-  .split('\n')
-  .map(line => line.trim())
-  .filter(line => line && !line.startsWith('*')) // Exclude wildcards, we don't need these
-  .slice(1); // Exclude the header line
-
-// ---- Hardcoded tracker domains ----
-const hardcodedTrackerDomains = [
+// ---- Public tracker domain list ----
+export const TRACKER_DOMAINS = [
   'google-analytics.com', 'googletagmanager.com', 'doubleclick.net',
   'fbcdn.net', 'scorecardresearch.com', 'quantserve.com', 'dotmetrics.net',
   'adservice.google.com', 'adroll.com', 'media.net', 'tapjoy.com',
@@ -39,9 +29,6 @@ const hardcodedTrackerDomains = [
   'yieldlab.net', 'yieldmanager.com', 'yieldmanager.net'
   // (You can extend this list as needed)
 ];
-
-// ---- Combined tracker domains ----
-export const TRACKER_DOMAINS = Array.from(new Set(trackerDomainsFromFile.concat(hardcodedTrackerDomains))); // Remove duplicates
 
 // ---- Cookie essential check ----
 export function isEssential(cookie) {
