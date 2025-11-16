@@ -248,17 +248,20 @@ export const Storage = {
 function mergeStates(local = {}, sync = {}) {
   return {
     blocked: local.blocked || 0,
-    allowed: local.allowed || 0, 
+    allowed: local.allowed || 0,
     bannersRemoved: local.bannersRemoved || 0,
 
-    blockedCookies: local.blockedCookies, 
-    allowedCookies: local.allowedCookies, 
+    blockedCookies: local.blockedCookies,
+    allowedCookies: local.allowedCookies,
 
     whitelist: Array.from(new Set([...(local.whitelist || []), ...(sync.whitelist || [])])),
     blacklist: Array.from(new Set([...(local.blacklist || []), ...(sync.blacklist || [])])),
 
-    active: local.active ?? true,      // Keep local preference
-    autoBlock: local.autoBlock ?? true // Keep local preference
+    // 🔽 add this line
+    rules: local.rules || sync.rules || [],
+
+    active: local.active ?? true,
+    autoBlock: local.autoBlock ?? true
   };
 }
 

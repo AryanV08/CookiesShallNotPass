@@ -90,8 +90,6 @@ global.chrome = {
           { id: 0 },           // fake sender
           (resp) => cb(resp)   // bridge sendResponse -> callback
         );
-        // If no listener claimed async and none responded synchronously,
-        // provide a harmless default so tests don’t hang.
         if (!claimed) setTimeout(() => cb({ ok: true }), 0);
       }, 0);
     },
@@ -102,7 +100,6 @@ global.chrome = {
   tabs: {
     _sent: [],
     _created: [],
-    // support both callback and promise styles
     query(queryInfo, cb) {
       const tabs = [{ id: 1, url: 'https://example.com/path' }];
       return (typeof cb === 'function') ? cb(tabs) : Promise.resolve(tabs);
@@ -111,10 +108,10 @@ global.chrome = {
     create(props, cb = () => {}) { chrome.tabs._created.push(props); cb({ id: 2, ...props }); }
   },
 
-  // --- DNR mock: async getDynamicRules + updateDynamicRules
+  // --- DNR mock ---
   declarativeNetRequest: {
-    _rules: [],   // current dynamic rules
-    _last: null,  // last update request (for assertions)
+    _rules: [],
+    _last: null,
 
     async getDynamicRules() {
       return this._rules.slice();
@@ -150,7 +147,24 @@ global.chrome = {
     setBadgeBackgroundColor: (_opts, _cb) => {}
   },
 
+  // ---------- FULL COOKIES MOCK (NEW + FIXED) ----------
   cookies: {
+    getAll(details, cb) {
+      if (typeof cb === "function") {
+        cb([]);        // Return empty list
+      } else {
+        return Promise.resolve([]); // Promise version
+      }
+    },
+
+    remove(details, cb = () => {}) {
+      cb({ removed: true, details });
+    },
+
+    set(details, cb = () => {}) {
+      cb({ ...details, set: true });
+    },
+
     onChanged: {
       _listeners: [],
       addListener(fn) { this._listeners.push(fn); },
@@ -185,7 +199,6 @@ global.alert   = global.alert || (() => {});
 
   const cleanup = () => ids.slice().forEach(id => realClr(id));
 
-  // Prefer Mocha hook if available; otherwise fall back to process exit.
   if (typeof global.after === 'function') {
     global.after(cleanup);
   } else if (typeof after === 'function') {
