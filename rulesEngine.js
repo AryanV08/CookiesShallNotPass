@@ -14,8 +14,57 @@ const nonEssentialTrackingCookies = [
   'trk', 'ads', 'adid', 'adtrack', 'pixel', 'tag'
 ];
 
-// ---- Public tracker domain list ----
-export const TRACKER_DOMAINS = [
+// ---- Load tracker domains from file (async, works in extension & Node test) ----
+// This file is from a public tracker list (pgl.yoyo.org) and can be updated as needed.
+let _trackerDomainsLoaded = false;
+async function loadTrackerDomainsFromFile() {
+  if (_trackerDomainsLoaded) return;
+
+  // Helper to parse the file content into domain list
+  const parse = (txt) => txt
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('*'))
+    .slice(1); // Exclude the header line
+
+  // 1) If running in a browser/extension context, fetch the packaged file using chrome.runtime.getURL
+  try {
+    if (typeof globalThis.chrome?.runtime?.getURL === 'function' && typeof fetch === 'function') {
+      const url = chrome.runtime.getURL('tracker_domains.txt');
+      const res = await fetch(url);
+      if (res.ok) {
+        const txt = await res.text();
+        const fromFile = parse(txt);
+        TRACKER_DOMAINS = Array.from(new Set(TRACKER_DOMAINS.concat(fromFile)));
+        _trackerDomainsLoaded = true;
+        return;
+      }
+    }
+  } catch (e) {
+    // ignore and try Node path below
+  }
+
+  // 2) If running under Node (tests), dynamically import node:fs and read the file
+  try {
+    if (typeof process !== 'undefined' && process.versions?.node) {
+      // dynamic import to avoid bundlers pulling in node:fs for browser builds
+      const fs = await import('node:fs');
+      const txt = fs.readFileSync(new URL('./tracker_domains.txt', import.meta.url), 'utf-8');
+      const fromFile = parse(txt);
+      TRACKER_DOMAINS = Array.from(new Set(TRACKER_DOMAINS.concat(fromFile)));
+      _trackerDomainsLoaded = true;
+      return;
+    }
+  } catch (e) {
+    // final fallback: leave TRACKER_DOMAINS as-is (hardcoded)
+    console.warn('Failed to load tracker domains from file:', e);
+  }
+
+  _trackerDomainsLoaded = true;
+}
+
+// ---- Additional tracker domains to supplement the file ----
+const hardcodedTrackerDomains = [
   'google-analytics.com', 'googletagmanager.com', 'doubleclick.net',
   'fbcdn.net', 'scorecardresearch.com', 'quantserve.com', 'dotmetrics.net',
   'adservice.google.com', 'adroll.com', 'media.net', 'tapjoy.com',
@@ -29,6 +78,10 @@ export const TRACKER_DOMAINS = [
   'yieldlab.net', 'yieldmanager.com', 'yieldmanager.net'
   // (You can extend this list as needed)
 ];
+
+// ---- Combined tracker domains ----
+// Start with hardcoded list; additional domains from the packaged text file are loaded asynchronously
+export let TRACKER_DOMAINS = Array.from(new Set(hardcodedTrackerDomains)); // Remove duplicates
 
 // ---- Cookie essential check ----
 export function isEssential(cookie) {
@@ -104,6 +157,8 @@ export async function updateRules(state = { active: true }) {
   const isActive = !!state?.active;
 
   // Build rules to add when active; otherwise, add none (effectively clears)
+  // Ensure external tracker list is loaded before building rules so tests and runtime see the same set
+  await loadTrackerDomainsFromFile();
   const rulesToAdd = isActive ? TRACKER_DOMAINS.map(d => createBlockRule(d)) : [];
 
   // If the DNR API is not present (some unit envs), provide a no-op fallback
