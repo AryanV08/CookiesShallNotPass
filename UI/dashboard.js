@@ -201,8 +201,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const pie = d3.pie().value(d => d.value)(nonZero);
     const arc = d3.arc().innerRadius(40).outerRadius(radius);
-    // Place labels toward the middle of each slice to keep them inside the colored area
-    const labelArc = d3.arc().innerRadius(40).outerRadius((radius + 40) / 2);
+    // Label arc retained for hover calculations; text rendering can be toggled off
+    const labelArc = d3.arc().innerRadius(0).outerRadius(radius * 0.8);
     const total = nonZero.reduce((sum, d) => sum + d.value, 0) || 1;
 
     const tooltip = getPieTooltip();
@@ -228,20 +228,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         tooltip.style.display = 'none';
       });
 
-    svg.selectAll('text')
-      .data(pie)
-      .enter()
-      .append('text')
-      .text(d => {
-        const pct = Math.round((d.data.value / total) * 100);
-        return options.labelText ? options.labelText(d, pct) : `${d.data.label}: ${pct}%`;
-      })
-      .attr('transform', d => `translate(${labelArc.centroid(d)})`)
-      .attr('text-anchor', 'middle')
-      .style('fill', options.labelFill || '#0b0d1a')
-      .style('font-size', '13px')
-      .style('font-weight', '700')
-      .style('text-shadow', '0 1px 2px rgba(11,13,26,0.65)');
+    if (options.showLabels) {
+      svg.selectAll('text')
+        .data(pie)
+        .enter()
+        .append('text')
+        .text(d => {
+          const pct = Math.round((d.data.value / total) * 100);
+          return options.labelText ? options.labelText(d, pct) : `${d.data.label}: ${pct}%`;
+        })
+        .attr('transform', d => `translate(${labelArc.centroid(d)})`)
+        .attr('text-anchor', 'middle')
+        .style('fill', options.labelFill || '#0b0d1a')
+        .style('font-size', '13px')
+        .style('font-weight', '700')
+        .style('stroke', '#0b0d1a')
+        .style('stroke-width', '2px')
+        .style('paint-order', 'stroke fill')
+        .style('text-shadow', '0 1px 2px rgba(11,13,26,0.65)');
+    }
 
     if (options.legend) {
       const legend = d3.select(container)
