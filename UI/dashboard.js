@@ -20,10 +20,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (autoBlockToggle) autoBlockToggle.checked = false;
   if (blockerActiveToggle) blockerActiveToggle.checked = true;
 
-  // Get references to DOM elements
-  const allowedCookiesList = document.getElementById("allowedCookiesList");
-  const blockedCookiesList = document.getElementById("blockedCookiesList");
-
   const totalBlockedEl = document.getElementById("totalBlocked");
   const totalAllowedEl = document.getElementById("totalAllowed");
   const totalBannersEl = document.getElementById("totalBanners");
@@ -34,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   
 
-// Helpers to interact with background script
+  // Helpers to interact with background script
   async function fetchState() {
     // Ask background script for current state
     return new Promise(resolve => chrome.runtime.sendMessage({ type: "GET_STATE" }, res => resolve(res?.state)));
@@ -70,52 +66,198 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Update whitelist and blacklist UI
-function updateListsUI(state) {
-  const whitelistCountEl = document.getElementById("whitelistCount");
-  const blacklistCountEl = document.getElementById("blacklistCount");
+  function updateListsUI(state) {
+    const whitelistCountEl = document.getElementById("whitelistCount");
+    const blacklistCountEl = document.getElementById("blacklistCount");
 
-  const whitelistCount = state.whitelist.length;
-  const blacklistCount = state.blacklist.length;
+    const whitelistCount = state.whitelist.length;
+    const blacklistCount = state.blacklist.length;
 
-  if (whitelistCountEl) {
-    whitelistCountEl.textContent = whitelistCount;
-    const pill = whitelistCountEl.closest(".metric-pill");
-    if (pill) {
-      pill.setAttribute("aria-label", "Whitelisted sites: " + whitelistCount);
+    if (whitelistCountEl) {
+      whitelistCountEl.textContent = whitelistCount;
+      const pill = whitelistCountEl.closest(".metric-pill");
+      if (pill) {
+        pill.setAttribute("aria-label", "Whitelisted sites: " + whitelistCount);
+      }
+    }
+    if (blacklistCountEl) {
+      blacklistCountEl.textContent = blacklistCount;
+      const pill = blacklistCountEl.closest(".metric-pill");
+      if (pill) {
+        pill.setAttribute("aria-label", "Blacklisted sites: " + blacklistCount);
+      }
+    }
+
+    // Update whitelist items
+    whitelistEl.innerHTML = '';
+    state.whitelist.forEach(site => {
+      const li = document.createElement('li');
+      li.textContent = site;
+      const btn = document.createElement('button');
+      btn.textContent = 'X'; // Remove button
+      btn.onclick = () => removeSiteFromList('whitelist', site);
+      li.appendChild(btn);
+      whitelistEl.appendChild(li);
+    });
+
+    // Update blacklist items
+    blacklistEl.innerHTML = '';
+    state.blacklist.forEach(site => {
+      const li = document.createElement('li');
+      li.textContent = site;
+      const btn = document.createElement('button');
+      btn.textContent = 'X'; // Remove button
+      btn.onclick = () => removeSiteFromList('blacklist', site);
+      li.appendChild(btn);
+      blacklistEl.appendChild(li);
+    });
+  }
+
+  // Build aggregate cookie counts per domain for charts
+  function buildDomainCounts(allowedCookies = {}, blockedCookies = {}) {
+    const domainMap = new Map();
+
+    const appendCounts = (bucket, type) => {
+      Object.entries(bucket || {}).forEach(([domain, cookies]) => {
+        const count = Object.values(cookies || {}).reduce((sum, val) => sum + val, 0);
+        if (!domainMap.has(domain)) domainMap.set(domain, { allowed: 0, blocked: 0 });
+        domainMap.get(domain)[type] += count;
+      });
+    };
+
+    appendCounts(allowedCookies, 'allowed');
+    appendCounts(blockedCookies, 'blocked');
+
+    return Array.from(domainMap.entries())
+      .map(([domain, counts]) => ({ domain, ...counts, total: counts.allowed + counts.blocked }))
+      .sort((a, b) => b.total - a.total);
+  }
+
+  // Render both pies in the cookies overview section
+  function renderCookiePies(domains) {
+    const themePiePalette = ['#1fc9a4', '#ff6b8c', '#8c6bff', '#33f3c1', '#ffb76b'];
+
+    const overallData = [
+      { label: 'Allowed', value: domains.reduce((sum, d) => sum + d.allowed, 0), color: themePiePalette[0] },
+      { label: 'Blocked', value: domains.reduce((sum, d) => sum + d.blocked, 0), color: themePiePalette[1] }
+    ];
+
+    renderPie('#cookiePieOverall', overallData, {
+      legend: true,
+      labelText: (_d, pct) => `${pct}%`,
+      labelFill: '#f5f7ff'
+    });
+
+    const topPalette = ['#8c6bff', '#33f3c1', '#ff6b8c', '#1fc9a4', '#ffb76b'];
+    const topDomains = domains
+      .filter(d => d.total > 0)
+      .slice(0, 5)
+      .map((d, idx) => ({ label: d.domain, value: d.total, color: topPalette[idx % topPalette.length] }));
+
+    renderPie('#cookiePieTopDomains', topDomains, {
+      legend: true,
+      labelText: (_d, pct) => `${pct}%`,
+      labelFill: '#f5f7ff',
+      tooltipFormatter: (d, pct) => `<strong>${d.data.label}</strong><br/>Share: ${pct}%<br/>Total: ${d.data.value}`
+    });
+  }
+
+  function getPieTooltip() {
+    let el = document.querySelector('.pie-tooltip');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'pie-tooltip';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function renderPie(selector, data, options = {}) {
+    const container = document.querySelector(selector);
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (typeof d3 === 'undefined') {
+      container.textContent = 'Charts unavailable.';
+      return;
+    }
+
+    const nonZero = data.filter(item => item.value > 0);
+    if (!nonZero.length) {
+      container.textContent = 'No cookie activity yet.';
+      return;
+    }
+
+    const width = container.clientWidth || 260;
+    const height = 240;
+    const radius = Math.min(width, height) / 2 - 10;
+
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', width)
+      .attr('height', height)
+      .append('g')
+      .attr('transform', `translate(${width / 2},${height / 2})`);
+
+    const pie = d3.pie().value(d => d.value)(nonZero);
+    const arc = d3.arc().innerRadius(40).outerRadius(radius);
+    // Place labels toward the middle of each slice to keep them inside the colored area
+    const labelArc = d3.arc().innerRadius(40).outerRadius((radius + 40) / 2);
+    const total = nonZero.reduce((sum, d) => sum + d.value, 0) || 1;
+
+    const tooltip = getPieTooltip();
+    const paths = svg.selectAll('path')
+      .data(pie)
+      .enter()
+      .append('path')
+      .attr('d', arc)
+      .attr('fill', d => d.data.color || '#8c6bff')
+      .attr('stroke', '#0b0d1a')
+      .attr('stroke-width', 2)
+      .on('mouseover', (event, d) => {
+        const pct = Math.round((d.data.value / total) * 100);
+        const formatter = options.tooltipFormatter || ((datum, pctVal) => `<strong>${datum.data.label}</strong><br/>Share: ${pctVal}%<br/>Total: ${datum.data.value}`);
+        tooltip.innerHTML = formatter(d, pct);
+        tooltip.style.display = 'block';
+      })
+      .on('mousemove', event => {
+        tooltip.style.left = `${event.clientX + 12}px`;
+        tooltip.style.top = `${event.clientY + 12}px`;
+      })
+      .on('mouseout', () => {
+        tooltip.style.display = 'none';
+      });
+
+    svg.selectAll('text')
+      .data(pie)
+      .enter()
+      .append('text')
+      .text(d => {
+        const pct = Math.round((d.data.value / total) * 100);
+        return options.labelText ? options.labelText(d, pct) : `${d.data.label}: ${pct}%`;
+      })
+      .attr('transform', d => `translate(${labelArc.centroid(d)})`)
+      .attr('text-anchor', 'middle')
+      .style('fill', options.labelFill || '#0b0d1a')
+      .style('font-size', '13px')
+      .style('font-weight', '700')
+      .style('text-shadow', '0 1px 2px rgba(11,13,26,0.65)');
+
+    if (options.legend) {
+      const legend = d3.select(container)
+        .append('div')
+        .style('margin-top', '8px');
+
+      legend.selectAll('div')
+        .data(nonZero)
+        .enter()
+        .append('div')
+        .style('display', 'flex')
+        .style('align-items', 'center')
+        .style('gap', '6px')
+        .html(d => `<span style="display:inline-block;width:12px;height:12px;background:${d.color || '#8c6bff'}"></span><span>${d.label} (${d.value})</span>`);
     }
   }
-  if (blacklistCountEl) {
-    blacklistCountEl.textContent = blacklistCount;
-    const pill = blacklistCountEl.closest(".metric-pill");
-    if (pill) {
-      pill.setAttribute("aria-label", "Blacklisted sites: " + blacklistCount);
-    }
-  }
-
-  // Update whitelist items
-  whitelistEl.innerHTML = '';
-  state.whitelist.forEach(site => {
-    const li = document.createElement('li');
-    li.textContent = site;
-    const btn = document.createElement('button');
-    btn.textContent = 'X'; // Remove button
-    btn.onclick = () => removeSiteFromList('whitelist', site);
-    li.appendChild(btn);
-    whitelistEl.appendChild(li);
-  });
-
-  // Update blacklist items
-  blacklistEl.innerHTML = '';
-  state.blacklist.forEach(site => {
-    const li = document.createElement('li');
-    li.textContent = site;
-    const btn = document.createElement('button');
-    btn.textContent = 'X'; // Remove button
-    btn.onclick = () => removeSiteFromList('blacklist', site);
-    li.appendChild(btn);
-    blacklistEl.appendChild(li);
-  });
-}
 
   // Update the entire UI 
   async function updateUI() {
@@ -132,43 +274,14 @@ function updateListsUI(state) {
       totalBlockedEl.textContent = blocked;
       totalAllowedEl.textContent = allowed;
       totalBannersEl.textContent = banners;
-       const allowedCookies = state.allowedCookies || {};
+      const allowedCookies = state.allowedCookies || {};
       const blockedCookies = state.blockedCookies || {};
 
-      if (allowedCookiesList) {
-        allowedCookiesList.innerHTML = '';
-        for (const [domain, cookies] of Object.entries(allowedCookies)) {
-          const li = document.createElement('li');
-          li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
-          allowedCookiesList.appendChild(li);
-        }
-      }
+      const domainCounts = buildDomainCounts(allowedCookies, blockedCookies);
 
-      if (blockedCookiesList) {
-        blockedCookiesList.innerHTML = '';
-        for (const [domain, cookies] of Object.entries(blockedCookies)) {
-          const li = document.createElement('li');
-          li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
-          blockedCookiesList.appendChild(li);
-        }
-      }
       // Update visualization
       visualization.updateChart(state);
-      // Update allowed cookies list
-      allowedCookiesList.innerHTML = '';
-      for (const [domain, cookies] of Object.entries(state.allowedCookies)) {
-        const li = document.createElement('li');
-        li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
-        allowedCookiesList.appendChild(li);
-      }
-
-      // Update blocked cookies list
-      blockedCookiesList.innerHTML = '';
-      for (const [domain, cookies] of Object.entries(state.blockedCookies)) {
-        const li = document.createElement('li');
-        li.textContent = `${domain}: ${JSON.stringify(cookies)}`;
-        blockedCookiesList.appendChild(li);
-      }
+      renderCookiePies(domainCounts);
     }
   
     if (state) {

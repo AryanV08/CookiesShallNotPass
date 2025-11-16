@@ -693,6 +693,43 @@ button.secondary:hover {
 
 /* End visualization styles */
 
+/* Cookies overview charts */
+.cookie-chart-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.cookie-pie {
+  width: 100%;
+  min-height: 240px;
+}
+
+.pie-tooltip {
+  position: fixed;
+  background: rgba(6, 8, 18, 0.95);
+  color: var(--text);
+  border: 1px solid var(--panel-outline);
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  font-size: 13px;
+  z-index: 2000;
+  display: none;
+}
+
+.cookie-card svg {
+  width: 100%;
+  height: 240px;
+}
+
+@media (min-width: 700px) {
+  .cookie-chart-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* End report link styles */
 
 
