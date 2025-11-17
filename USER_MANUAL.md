@@ -179,6 +179,7 @@ CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Jav
   - rulesEngine.js
   - storage.js
   - icon.png
+  - tracker_domains.txt
 4. Create a new folder on your desktop and name it “CookiesShallNotPass Extension”.
 5. Copy and paste the previously listed files/folders into the new folder.
 6. Install nodejs 24.0 at https://nodejs.org/en/download  
