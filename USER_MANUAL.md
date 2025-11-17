@@ -50,7 +50,7 @@ The popup gives you direct access to essential controls while browsing.
 
 - **Enable or Disable the Blocker (1):**  
   - Use the turn On/Off toggle to activate or pause cookie blocking.  
-  - When enabled, the extension automatically blocks unwanted cookies based on your preferences and lists. When disabled, all cookies will behave normally as in Chrome.  
+  - When enabled, the extension automatically blocks non-essential cookies based on your preferences and lists. When disabled, all cookies will behave normally as in Chrome.  
 
 - **Cookie Stats (2):**  
   - Cookies Blocked So Far: Number of cookies that have been blocked so far.  
