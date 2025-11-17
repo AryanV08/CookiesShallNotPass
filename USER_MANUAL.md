@@ -181,7 +181,7 @@ CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Jav
   - icon.png
 4. Create a new folder on your desktop and name it “CookiesShallNotPass Extension”.
 5. Copy and paste the previously listed files/folders into the new folder.
-6. Install nodejs 20.x or above at https://nodejs.org/en/download  
+6. Install nodejs 24.0 at https://nodejs.org/en/download  
 7. Install dependencies with `npm install`  
 8. Load into Chrome for testing  
   - Open Chrome -> Click the three dots in the top right corner and click “Settings” at the bottom of the dropdown -> Click “Extensions” found in the bottom left corner.
