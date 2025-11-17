@@ -84,21 +84,20 @@
 
   </div>
 
-    <!-- New section to display allowed and blocked cookies -->
+    <!-- New section to display allowed vs blocked as charts -->
 <section class="cookies" id="cookiesSection">
   <h2>Cookies Overview</h2>
-  <div class="cookie-grid">
+  <div class="cookie-chart-grid">
     <div class="cookie-card">
-      <h3>Allowed Cookies</h3>
-      <ul id="allowedCookiesList"></ul>
+      <h3>Allowed vs Blocked</h3>
+      <div id="cookiePieOverall" class="cookie-pie"></div>
     </div>
     <div class="cookie-card">
-      <h3>Blocked Cookies</h3>
-      <ul id="blockedCookiesList"></ul>
-    </div>
+      <h3>Top Domains</h3>
+      <div id="cookiePieTopDomains" class="cookie-pie"></div>
+    </div> 
   </div>
 </section>
-<div id="chart"></div>
 
     <!-- Site Lists Section -->
     <section class="lists" id="listsSection">

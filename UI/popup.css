@@ -35,10 +35,10 @@ body {
 .panel {
   position: relative;
   background: linear-gradient(155deg, rgba(14, 17, 35, 0.95), rgba(7, 9, 22, 0.98));
-  padding: 16px;
-  border-radius: 16px;
+  padding: 18px;
+  border-radius: 14px;
   border: 1px solid var(--soft-outline);
-  box-shadow: var(--shadow);
+  box-shadow: 0 12px 26px rgba(2, 3, 10, 0.6);
   backdrop-filter: blur(12px);
   overflow: hidden;
   transition: border 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
@@ -140,13 +140,15 @@ input:checked + .slider:before {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0; /* allow children to shrink on narrow viewports */
 }
 
 .stat {
   position: relative;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   padding: 14px 12px;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid var(--soft-outline);
   background: rgba(255, 255, 255, 0.02);
   text-align: center;
@@ -178,7 +180,8 @@ input:checked + .slider:before {
 
 .stat-number {
   display: block;
-  font-size: 22px;
+  font-size: clamp(18px, 6vw, 22px);
+  line-height: 1.1;
   font-weight: 700;
   margin-top: 14px;
 }
