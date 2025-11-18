@@ -18,12 +18,12 @@
 ### The layout of your directory structure
 The CookiesShallNotPass repository is organized to clearly separate source code, testing resources, documentation, and automated workflow configurations.  
 
-- The main source files for the Chrome extension are located in the project’s root directory, including **index.html, index.css, main.js, and whitelist.js**, which together define the popup interface, core logic, and whitelist functionality of the extension.  
+- The main source files for the Chrome extension are located in **/UI**, including **dashboard.{css,html,js}, popup.{css,html,js}, and visual.js**, which together define the popup interface, core logic, and whitelist functionality of the extension.  
 - The **manifest.json** file serves as the central configuration file recognized by Chrome, specifying metadata, permissions, and entry points.  
 - Automated workflows for continuous integration and testing are stored in the **.github/workflows** directory.  
 - The **tests** folder contains unit and integration test scripts that verify both the frontend and backend components.  
 - Supporting metadata and dependencies for Node.js testing are managed through **package.json** and **package-lock.json**.  
-- The **USER_MANUEL.md** file provides end-user instructions, whereas **coding-guidelines.md** outlines standards and contribution rules for developers.  
+- The **USER_MANUAL.md** file provides end-user instructions, whereas **coding-guidelines.md** outlines standards and contribution rules for developers.  
 - General project information and setup instructions can be found in the **README.md**.  
 
 ---
