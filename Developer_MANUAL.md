@@ -1,17 +1,25 @@
 # Developer Documentation
- 
-#### How to obtain the source code
-1. Click the small puzzle icon in the top right corner of your Chrome browser.  
-2. Locate the CookiesShallNotPass extension in the list and click it.  
-3. Once clicked, the dashboard will pop up.  
-4. Scroll to the bottom of the dashboard and click the “View Source” hyperlink.  
-5. You will be redirected to the official GitHub repository in a new tab.  
-6. To clone the repository locally, on the GitHub page, click the “Code” button (green dropdown).  
-7. Copy the HTTPS URL: https://github.com/AryanV08/CookiesShallNotPass.git  
-8. Open a terminal or command prompt and run:  
-- `git clone https://github.com/AryanV08/CookiesShallNotPass.git`
-- `cd CookiesShallNotPass`
-9. Now you can see all the source code!  
+
+---
+
+## How to Obtain the Source Code
+
+### **Method 1 — From the Extension**
+1. Click the **puzzle icon** in Chrome (top-right).
+2. Select **CookiesShallNotPass** from the list.
+3. In the dashboard, scroll down and click **“View Source.”**
+4. This will open the **official GitHub repository** in a new tab.
+
+---
+
+### **Method 2 — Clone Directly from GitHub**
+1. Visit the repository:  
+   **https://github.com/AryanV08/CookiesShallNotPass**
+2. Click the green **Code** button and copy the **HTTPS URL**.
+3. Open your terminal and run:
+   ```bash
+   git clone https://github.com/AryanV08/CookiesShallNotPass.git
+   cd CookiesShallNotPass
 
 ---
 
