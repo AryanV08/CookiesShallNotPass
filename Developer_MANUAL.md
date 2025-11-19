@@ -1,17 +1,12 @@
 # Developer Documentation
  
 #### How to obtain the source code
-1. Click the small puzzle icon in the top right corner of your Chrome browser.  
-2. Locate the CookiesShallNotPass extension in the list and click it.  
-3. Once clicked, the dashboard will pop up.  
-4. Scroll to the bottom of the dashboard and click the “View Source” hyperlink.  
-5. You will be redirected to the official GitHub repository in a new tab.  
-6. To clone the repository locally, on the GitHub page, click the “Code” button (green dropdown).  
-7. Copy the HTTPS URL: https://github.com/AryanV08/CookiesShallNotPass.git  
-8. Open a terminal or command prompt and run:  
+1. Clone the repository locally: On this project's [GitHub page](https://github.com/AryanV08/CookiesShallNotPass/tree/main), click the “Code” button (green dropdown).  
+2. Copy the HTTPS URL: https://github.com/AryanV08/CookiesShallNotPass.git  
+3. Open a terminal or command prompt and run:  
 - `git clone https://github.com/AryanV08/CookiesShallNotPass.git`
 - `cd CookiesShallNotPass`
-9. Now you can see all the source code!  
+4. Now you can see all the source code!  
 
 ---
 
@@ -38,7 +33,7 @@ CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Jav
   - `cd CookiesShallNotPass`
 2. Find the folder you just cloned.
 3. Verify the project structure (Ensure the following files/folders are present):
-  - /ui
+  - /UI
   - manifest.json
   - background.js
   - content.js
@@ -46,11 +41,9 @@ CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Jav
   - storage.js
   - icon.png
   - tracker_domains.txt
-4. Create a new folder on your desktop and name it “CookiesShallNotPass Extension”.
-5. Copy and paste the previously listed files/folders into the new folder.
-6. Install nodejs 24.0 at https://nodejs.org/en/download  
-7. Install dependencies with `npm install`  
-8. Load into Chrome for testing  
+4. Install nodejs 24.0 at https://nodejs.org/en/download  
+5. Install dependencies with `npm install`  
+6. Load into Chrome for testing  
   - Open Chrome -> Click the three dots in the top right corner and click “Settings” at the bottom of the dropdown -> Click “Extensions” found in the bottom left corner.
   - Enable the “Developer mode” switch in the top right corner. 
   - Click “Load unpacked” in the top left corner.
@@ -59,7 +52,7 @@ CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Jav
   - The extension’s cookie icon will now appear next to the puzzle piece icon.
   - Click the Cookie icon and enable or make sure the toggle switch is green.
 
-9. Run and verify components  
+7. Run and verify components  
   - Open the popup -> confirm the dashboard and settings load correctly  
   - Modify preferences or import whitelist/blacklist files to confirm UI-backend integration  
 
