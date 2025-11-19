@@ -1,8 +1,4 @@
 // // storage.js
-// // This module wraps Chrome storage APIs in async/await-friendly Promise helpers.
-// // It also handles syncing between local storage (fast, extension-local cache)
-// // and Chrome sync storage (cloud-backed, shared across signed-in Chrome browsers).
-
 // let lastSyncedData = null;                   // Snapshot of last synced state for change detection
 // export const SYNC_INTERVAL = 5 * 60 * 1000;        // 5-minute sync window (not used in this file but referenced externally)
 
@@ -49,23 +45,34 @@
 
 //   /**
 //    * Load all data from chrome.storage.sync into local storage when extension starts.
-//    * Great for cold-start consistency across devices signed into Chrome.
+//    * Merge with local data to avoid overwriting local progress.
 //    */
 //   async loadFromSync() {
 //     return new Promise(resolve => {
-//       chrome.storage.sync.get(null, data => {
+//       try {
+//       chrome.storage.sync.get(null, async data => {
 //         if (data && Object.keys(data).length > 0) {
-//           // If sync has content, hydrate local cache with it
-//           chrome.storage.local.set(data, () => {
-//             console.log(" Loaded sync data into local cache");
-//             lastSyncedData = JSON.stringify(data); // track snapshot for later comparison
+//           // Load local data
+//           const localData = await new Promise(res => chrome.storage.local.get(null, res));
+
+//           // Merge sync data with local data
+//           const merged = mergeStates(localData, data);
+
+//           // Save merged state to local storage
+//           chrome.storage.local.set(merged, () => {
+//             console.log("✅ Loaded and merged sync data into local cache");
+//             lastSyncedData = JSON.stringify(merged); // Update snapshot
 //             resolve(true);
 //           });
 //         } else {
-//           console.log(" No sync data found to load");
+//           console.log("No sync data found to load");
 //           resolve(false);
 //         }
 //       });
+//       } catch (error) {
+//         console.error("Error loading from sync:", error);
+//         resolve(false);
+//       }
 //     });
 //   },
 
@@ -75,43 +82,85 @@
 
 //   /**
 //    * Push local storage to cloud if anything has changed.
-//    * Avoids unnecessary sync calls by comparing snapshots.
+//    * Merge with sync storage first to prevent overwriting updates from other devices.
 //    */
 //   async syncToCloud() {
-//     return new Promise((resolve, reject) => {
-//       chrome.storage.local.get(null, localData => {
-//         const currentData = JSON.stringify(localData);
+//     return new Promise(async (resolve, reject) => {
+//       try {
+//       // Get current local data
+//       const localData = await new Promise(res => chrome.storage.local.get(null, res));
 
-//         // Skip if there are no changes since last sync
+//       // Get current sync data
+//       chrome.storage.sync.get(null, (syncData) => {
+//         // Merge local and sync data
+//         const merged = mergeStates(localData, syncData);
+
+//         const currentData = JSON.stringify(merged);
+
+//         // Skip if no changes
 //         if (currentData === lastSyncedData) {
 //           console.log("No changes since last sync — skipping");
 //           return resolve(false);
 //         }
 
-//         // Upload to sync storage
-//         chrome.storage.sync.set(localData, () => {
+//         // Save merged state to cloud
+//         chrome.storage.sync.set(merged, () => {
 //           if (chrome.runtime.lastError) {
 //             console.warn("⚠️ Sync failed:", chrome.runtime.lastError.message);
 //             return reject(chrome.runtime.lastError);
 //           }
 
-//           lastSyncedData = currentData; // update snapshot
+//           lastSyncedData = currentData; // Update snapshot
 //           console.log("☁️ Synced local data → cloud successfully");
 //           resolve(true);
 //         });
-//       });
+//       }); 
+//       } catch (error) {
+//         console.error("Sync process failed:", error);
+//         reject(new Error("Sync process failed"));
+//       }
 //     });
 //   }
 // };
 
+// // -------------------------------
+// // Merge helper functions
+// // -------------------------------
+
+// /**
+//  * Merge local and sync states safely:
+//  * - Numeric counters: take local value
+//  * - Cookie counts: local value
+//  * - Whitelist/blacklist: union
+//  * - Preferences: local value
+//  */
+// function mergeStates(local = {}, sync = {}) {
+//   return {
+//     blocked: local.blocked || 0,
+//     allowed: local.allowed || 0,
+//     bannersRemoved: local.bannersRemoved || 0,
+
+//     blockedCookies: local.blockedCookies,
+//     allowedCookies: local.allowedCookies,
+
+//     whitelist: Array.from(new Set([...(local.whitelist || []), ...(sync.whitelist || [])])),
+//     blacklist: Array.from(new Set([...(local.blacklist || []), ...(sync.blacklist || [])])),
+
+//     // 🔽 add this line
+//     rules: local.rules || sync.rules || [],
+
+//     active: local.active ?? true,
+//     autoBlock: local.autoBlock ?? true
+//   };
+// }
 
 // storage.js
 // This module wraps Chrome storage APIs in async/await-friendly Promise helpers.
-// It also handles syncing between local storage (fast, extension-local cache)
-// and Chrome sync storage (cloud-backed, shared across signed-in Chrome browsers).
+// It handles selective syncing - only whitelist and blacklist are synced across devices
+// to maintain data consistency while keeping statistics local.
 
-let lastSyncedData = null;                   // Snapshot of last synced state for change detection
-export const SYNC_INTERVAL = 5 * 60 * 1000;        // 5-minute sync window (not used in this file but referenced externally)
+let lastSyncedData = null; // Snapshot of last synced lists for change detection
+export const SYNC_INTERVAL = 5 * 60 * 1000; // 5-minute sync window
 
 export const Storage = {
   // -------------------------------
@@ -155,31 +204,38 @@ export const Storage = {
   // -------------------------------
 
   /**
-   * Load all data from chrome.storage.sync into local storage when extension starts.
-   * Merge with local data to avoid overwriting local progress.
+   * Load whitelist and blacklist from chrome.storage.sync into local storage when extension starts.
+   * Only syncs domain lists to maintain cross-device consistency without affecting local statistics.
    */
   async loadFromSync() {
     return new Promise(resolve => {
       try {
-      chrome.storage.sync.get(null, async data => {
-        if (data && Object.keys(data).length > 0) {
-          // Load local data
-          const localData = await new Promise(res => chrome.storage.local.get(null, res));
+        chrome.storage.sync.get(['whitelist', 'blacklist'], async (syncData) => {
+          if (syncData && (syncData.whitelist || syncData.blacklist)) {
+            // Load current local data
+            const localData = await new Promise(res => chrome.storage.local.get(null, res));
+            
+            // Merge only the lists - preserve all local statistics and preferences
+            const merged = {
+              ...localData,
+              whitelist: Array.from(new Set([...(localData.whitelist || []), ...(syncData.whitelist || [])])),
+              blacklist: Array.from(new Set([...(localData.blacklist || []), ...(syncData.blacklist || [])]))
+            };
 
-          // Merge sync data with local data
-          const merged = mergeStates(localData, data);
-
-          // Save merged state to local storage
-          chrome.storage.local.set(merged, () => {
-            console.log("✅ Loaded and merged sync data into local cache");
-            lastSyncedData = JSON.stringify(merged); // Update snapshot
-            resolve(true);
-          });
-        } else {
-          console.log("No sync data found to load");
-          resolve(false);
-        }
-      });
+            // Save merged state to local storage
+            chrome.storage.local.set(merged, () => {
+              console.log("✅ Loaded and merged domain lists from sync");
+              lastSyncedData = JSON.stringify({
+                whitelist: merged.whitelist,
+                blacklist: merged.blacklist
+              });
+              resolve(true);
+            });
+          } else {
+            console.log("No domain lists found in sync storage");
+            resolve(false);
+          }
+        });
       } catch (error) {
         console.error("Error loading from sync:", error);
         resolve(false);
@@ -192,40 +248,40 @@ export const Storage = {
   // -------------------------------
 
   /**
-   * Push local storage to cloud if anything has changed.
-   * Merge with sync storage first to prevent overwriting updates from other devices.
+   * Push only whitelist and blacklist to cloud storage if anything has changed.
+   * Statistics and cookie counts remain local to each device.
    */
   async syncToCloud() {
     return new Promise(async (resolve, reject) => {
       try {
-      // Get current local data
-      const localData = await new Promise(res => chrome.storage.local.get(null, res));
+        // Get current local data
+        const localData = await new Promise(res => chrome.storage.local.get(null, res));
+        
+        // Extract only the data we want to sync
+        const dataToSync = {
+          whitelist: localData.whitelist || [],
+          blacklist: localData.blacklist || []
+        };
 
-      // Get current sync data
-      chrome.storage.sync.get(null, (syncData) => {
-        // Merge local and sync data
-        const merged = mergeStates(localData, syncData);
+        const currentData = JSON.stringify(dataToSync);
 
-        const currentData = JSON.stringify(merged);
-
-        // Skip if no changes
+        // Skip if there are no changes since last sync
         if (currentData === lastSyncedData) {
-          console.log("No changes since last sync — skipping");
+          console.log("No changes in domain lists since last sync — skipping");
           return resolve(false);
         }
 
-        // Save merged state to cloud
-        chrome.storage.sync.set(merged, () => {
+        // Upload only domain lists to sync storage
+        chrome.storage.sync.set(dataToSync, () => {
           if (chrome.runtime.lastError) {
             console.warn("⚠️ Sync failed:", chrome.runtime.lastError.message);
             return reject(chrome.runtime.lastError);
           }
 
           lastSyncedData = currentData; // Update snapshot
-          console.log("☁️ Synced local data → cloud successfully");
+          console.log("☁️ Synced domain lists → cloud successfully");
           resolve(true);
         });
-      }); 
       } catch (error) {
         console.error("Sync process failed:", error);
         reject(new Error("Sync process failed"));
@@ -233,35 +289,3 @@ export const Storage = {
     });
   }
 };
-
-// -------------------------------
-// Merge helper functions
-// -------------------------------
-
-/**
- * Merge local and sync states safely:
- * - Numeric counters: take local value
- * - Cookie counts: local value
- * - Whitelist/blacklist: union
- * - Preferences: local value
- */
-function mergeStates(local = {}, sync = {}) {
-  return {
-    blocked: local.blocked || 0,
-    allowed: local.allowed || 0,
-    bannersRemoved: local.bannersRemoved || 0,
-
-    blockedCookies: local.blockedCookies,
-    allowedCookies: local.allowedCookies,
-
-    whitelist: Array.from(new Set([...(local.whitelist || []), ...(sync.whitelist || [])])),
-    blacklist: Array.from(new Set([...(local.blacklist || []), ...(sync.blacklist || [])])),
-
-    // 🔽 add this line
-    rules: local.rules || sync.rules || [],
-
-    active: local.active ?? true,
-    autoBlock: local.autoBlock ?? true
-  };
-}
-

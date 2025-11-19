@@ -99,6 +99,7 @@ export function isEssential(cookie) {
     if (!(globalThis.chrome?.tabs?.query)) {
       // Prefer secure, session-like, httpOnly/hostOnly as essential heuristics
       if (cookie?.secure && cookie?.hostOnly && cookie?.httpOnly) return resolve(true);
+      if (cookie?.secure && cookie?.httpOnly) return resolve(true);
       if (cookie?.hostOnly && (cookie?.sameSite === 'Strict' || cookie?.sameSite === 'Lax')) return resolve(true);
       if (cookie?.httpOnly && cookie?.hostOnly) return resolve(true);
       if (!cookie?.expirationDate) return resolve(true); // session cookie
@@ -122,7 +123,8 @@ export function isEssential(cookie) {
       if (isCrossSite) return resolve(false);
 
       if (cookie?.secure && cookie?.hostOnly && cookie?.httpOnly) return resolve(true);
-      if (cookie?.hostOnly && (cookie?.sameSite === 'Strict' || cookie?.sameSite === 'Lax')) return resolve(true);
+      if (cookie?.secure && cookie?.httpOnly) return resolve(true);
+      if ((cookie?.hostOnly || cookie?.secure || cookie?.httpOnly) && (cookie?.sameSite === 'Strict' || cookie?.sameSite === 'Lax')) return resolve(true);
       if (cookie?.httpOnly && cookie?.hostOnly) return resolve(true);
       if (!cookie?.expirationDate) return resolve(true); // session cookie
 
