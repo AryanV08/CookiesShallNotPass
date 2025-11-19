@@ -190,6 +190,7 @@ if (typeof window !== "undefined" && window.__TEST__) {
         <input type="text" class="viz-search" placeholder="Search domains…" aria-label="Search domains"/>
       </div>
       <div class="viz-controls-right">
+        <span class="viz-sort-label">Sort by:</span>
         <button type="button" data-sort="total" class="viz-sort active">Trend</button>
         <button type="button" data-sort="blocked" class="viz-sort">Blocked</button>
         <button type="button" data-sort="allowed" class="viz-sort">Allowed</button>
@@ -344,40 +345,53 @@ if (typeof window !== "undefined" && window.__TEST__) {
         .transition().duration(1000).delay(150).ease(d3.easeCubicOut)
         .attr("stroke-dashoffset", 0);
 
-      // -- X Axis Labels (CLEANED) --
+      // -- X Axis Labels (REFINED) --
       const xlabelGroup = g.append("g")
-        .attr("class","wave-x-labels")
-        .attr("transform", `translate(0, ${height + 30})`);
+        .attr("class", "wave-x-labels")
+        .attr("transform", `translate(0, ${height + 15})`);
+
+      // Determine how many pixels each data point has
+      const spacePerItem = width / Math.max(data.length, 1);
+      
+      // Only skip items if they are tighter than 11px
+      const skipFactor = spacePerItem < 11 ? Math.ceil(11 / spacePerItem) : 1;
 
       data.forEach((d, i) => {
-        if (data.length > 20 && i % 2 !== 0) return; 
+        if (i % skipFactor !== 0) return;
         
         const x = xIndex(i);
         
-        // 1. Remove "www", "ads", etc.
-        let label = d.domain.replace(/^www\./, '')
-          .replace(/^(ads|analytics|static|cdn|api|track)\./, '');
+        // 1. Remove prefixes (www, api, etc)
+        // 2. Remove TLD (split by dot and take the first part). 
+        //    Example: "www.google.com" -> "google", "amazon.co.uk" -> "amazon"
+        let label = d.domain
+          .replace(/^www\./, '')
+          .replace(/^(ads|analytics|static|cdn|api|track|mobile|m)\./, '')
+          .split('.')[0]; // <-- This strips .com, .org, .net, etc.
         
-        // 2. Remove TLD (everything after the first dot)
-        // "google.com" -> "google"
-        label = label.split('.')[0];
+        // Capitalize first letter for nicer look
+        label = label.charAt(0).toUpperCase() + label.slice(1);
 
-        // 3. Format
-        label = label.toUpperCase();
-        if (label.length > 12) label = label.substring(0, 10) + "..";
+        // Truncate if still too long (e.g. "VeryLongCompanyName")
+        if (label.length > 20) {
+            label = label.substring(0, 18) + "..";
+        }
+
+        // Adjust font size based on density
+        const fontSize = spacePerItem < 16 ? "10px" : "11px";
 
         xlabelGroup.append("text")
-          .attr("x", x).attr("y", 0)
-          .attr("text-anchor", "end")
+          .attr("x", 0).attr("y", 0)
+          .attr("text-anchor", "end") 
           .attr("dominant-baseline", "middle")
-          .attr("fill", i % 2 === 0 ? "#8c9eff" : "#5c6b9f")
-          .style("font-size", "11px")
-          .style("font-family", "monospace")
+          .attr("fill", i % 2 === 0 ? "#8c9eff" : "#647acb")
+          .style("font-size", fontSize)
+          .style("font-family", "'Inter', monospace")
           .style("font-weight", "500")
           .style("opacity", 0)
-          .attr("transform", `rotate(-45 ${x} 0)`)
+          .attr("transform", `translate(${x}, 10) rotate(-90)`) 
           .text(label)
-          .transition().duration(500).delay(400 + i * 20).style("opacity", 1);
+          .transition().duration(500).delay(300 + i * 10).style("opacity", 1);
       });
 
       // -- Interaction --
@@ -438,13 +452,10 @@ if (typeof window !== "undefined" && window.__TEST__) {
       let resizeTimeout;
       const ro = new ResizeObserver(() => {
         clearTimeout(resizeTimeout);
-    
-        // 🔥 Fix infinite refresh: increase debounce time
         resizeTimeout = setTimeout(() => {
           requestAnimationFrame(() => updateChart(lastState));
-        }, 250);  // <-- changed from 66 to 250
+        }, 250); 
       });
-    
       ro.observe(container);
     } else {
       window.addEventListener("resize", () =>
@@ -452,9 +463,6 @@ if (typeof window !== "undefined" && window.__TEST__) {
       );
     }
     
-    return { updateChart };
-    
-
     return { updateChart };
   }
 
