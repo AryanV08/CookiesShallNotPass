@@ -68,6 +68,28 @@ Tests are stored in the `tests/` directory (not shown in screenshot but required
 
 ---
 
+## How to Build the Software
+
+CookiesShallNotPass is a Chrome extension built with **HTML, CSS, JavaScript**, and **Manifest V3**.  
+There is no compilation step — you simply install dependencies and load the project into Chrome.
+
+---
+
+1. Open your terminal and run:
+   ```bash
+   git clone https://github.com/AryanV08/CookiesShallNotPass.git
+   cd CookiesShallNotPass
+   
+---
+### How to test the software
+To run the provided test suite, run:  
+- `npm run test`
+in the root directory of the repository.  
+
+The tests will automatically be run on each commit and pull request to the github repository.  
+
+---
+
 ### How to add new test
 1. Tests are stored in the folder named **tests**  
 2. At the top of the test file, import the function or module you want to test  
@@ -77,6 +99,7 @@ Tests are stored in the `tests/` directory (not shown in screenshot but required
 - `npm run test`
 
 ---
+
 
 ### How to build a release of the software
 - **Check the code**  
