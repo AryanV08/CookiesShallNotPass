@@ -90,8 +90,8 @@ The popup gives you direct access to essential controls while browsing.
 
 **Import / Export Lists:**  
 <img src="./images/im-export.png" alt="Import/Export features" width="800"/>
-- Import: Upload a TXT or JSON file of sites to whitelist or blacklist.  
-- Export: Download your current lists for backup or sharing across devices.  
+- Import: Upload a TXT (with [whitelist]/[blacklist] sections, one domain per line) or JSON file of sites to whitelist or blacklist.  
+- Export: Download JSON or TXT snapshots of your current lists for backup or sharing across devices.  
 
 **Report a Bug:**  
 - Use the “Report a Bug” form directly from the dashboard.  
@@ -131,6 +131,7 @@ Once the startup process is complete, ie, the extension icon is clicked and succ
 - There will be no trivial bugs in the implemented use cases  
 
 ---
+
 
 
 

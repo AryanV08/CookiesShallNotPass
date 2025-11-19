@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const importFileEl = document.getElementById("importFile");
   const importBtn = document.getElementById("importBtn");
   const exportBtn = document.getElementById("exportBtn");
+  const exportTxtBtn = document.getElementById("exportTxtBtn");
 
   
 
@@ -326,36 +327,108 @@ document.addEventListener("DOMContentLoaded", async () => {
     await addSiteToList('blacklist', site);
   };
 
-  // Import list from JSON file
+  // Parse JSON whitelist/blacklist payloads
+  function parseJsonLists(text) {
+    const obj = JSON.parse(text);
+    return {
+      whitelist: Array.isArray(obj.whitelist) ? obj.whitelist : [],
+      blacklist: Array.isArray(obj.blacklist) ? obj.blacklist : []
+    };
+  }
+
+  // Parse newline-based TXT payloads (supports optional [list] headers)
+  function parseTxtLists(text) {
+    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line && !line.startsWith('#'));
+    const lists = { whitelist: [], blacklist: [] };
+    let current = 'whitelist';
+    lines.forEach(line => {
+      const section = line.match(/^\[(whitelist|blacklist)\]$/i);
+      if (section) {
+        current = section[1].toLowerCase();
+        return;
+      }
+      const inline = line.match(/^(whitelist|blacklist)\s*[:|-]\s*(.+)$/i);
+      if (inline) {
+        lists[inline[1].toLowerCase()].push(inline[2].trim());
+        return;
+      }
+      lists[current].push(line);
+    });
+    return lists;
+  }
+
+  function mergeLists(state, additions) {
+    state.whitelist = Array.from(new Set([...(additions.whitelist || []), ...(state.whitelist || [])]));
+    state.blacklist = Array.from(new Set([...(additions.blacklist || []), ...(state.blacklist || [])]));
+    return state;
+  }
+
+  function buildTxtExport(state) {
+    const buildSection = (title, entries) => {
+      const header = `[${title}]`;
+      const body = (entries && entries.length) ? entries.join('\n') : '';
+      return `${header}\n${body}`.trimEnd();
+    };
+    return `${buildSection('whitelist', state.whitelist)}\n\n${buildSection('blacklist', state.blacklist)}\n`;
+  }
+
+  function triggerDownload(content, fileName, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Import list from JSON or TXT file
   importBtn.onclick = async () => {
     const file = importFileEl.files[0];
     if (!file) return alert("Select a file first");
-    const filename = file.name; // Get the file name
+    const filename = file.name;
     const text = await file.text();
     try {
-      const obj = JSON.parse(text);
+      let lists;
+      const lower = filename.toLowerCase();
+      if (lower.endsWith('.json')) {
+        lists = parseJsonLists(text);
+      } else if (lower.endsWith('.txt')) {
+        lists = parseTxtLists(text);
+      } else {
+        try {
+          lists = parseJsonLists(text);
+        } catch (jsonErr) {
+          lists = parseTxtLists(text);
+        }
+      }
+
       const state = await fetchState();
-      state.whitelist = Array.from(new Set([...(obj.whitelist || []), ...(state.whitelist || [])]));
-      state.blacklist = Array.from(new Set([...(obj.blacklist || []), ...(state.blacklist || [])]));
+      if (!state) throw new Error('Unable to load current lists');
+      mergeLists(state, lists);
       await updateState(state);
       updateListsUI(state);
-      // Clear the file input after importing
-      importFileEl.value = ''; // This removes the file from the input field
-    
+      importFileEl.value = '';
       alert(`Import successful: ${filename}`);
-    } catch(e) { alert("Invalid file format"); }
+    } catch (e) {
+      console.error('Import failed', e);
+      alert("Invalid file format");
+    }
   };
 
   // Export list to JSON file
   exportBtn.onclick = async () => {
-    const state = await fetchState();
-    const blob = new Blob([JSON.stringify({ whitelist: state.whitelist, blacklist: state.blacklist })], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'csp_lists.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    const state = (await fetchState()) || { whitelist: [], blacklist: [] };
+    triggerDownload(JSON.stringify({ whitelist: state.whitelist, blacklist: state.blacklist }, null, 2), 'csp_lists.json', 'application/json');
   };
+
+  // Export list to TXT file
+  if (exportTxtBtn) {
+    exportTxtBtn.onclick = async () => {
+      const state = (await fetchState()) || { whitelist: [], blacklist: [] };
+      triggerDownload(buildTxtExport(state), 'csp_lists.txt', 'text/plain');
+    };
+  }
 
   // Initial UI update on load
   await updateUI();
