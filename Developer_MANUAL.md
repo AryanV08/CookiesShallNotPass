@@ -18,61 +18,53 @@
 ### The layout of the directory structure
 ---
 
-CookiesShallNotPass/
-├── UI/ --- These files power the popup interface, dashboard, and all visualizations.
-│   ├── d3.min.js
-│   ├── dashboard.css
-│   ├── dashboard.html
-│   ├── dashboard.js
-│   ├── popup.css
-│   ├── popup.html
-│   ├── popup.js
-│   └── visual.js
+### **UI Layer (`/UI`)**
+All user-facing interface code is stored inside the `UI` folder:
 
-│The main behavior of the extension lives at the root:
-├── .gitignore  
-├── background.js  — handles background tasks, rule updates, cleanup  
-├── coding-guidelines.md  — style and contribution standards 
-├── content.js   — runs in webpage context (if needed)  
-├── Developer_MANUAL.md    — developer instructions  
-├── icon.png
-├── manifest.json    — Chrome MV3 configuration  
-├── package-lock.json
-├── package.json
-├── README.md     — main project guide  
-├── rulesEngine.js   — generates and manages DNR rules 
-├── storage.js
-├── tracker_domains.txt   — list of known tracking domains  
-└── USER_MANUAL.md   — end-user guide 
+- `d3.min.js`
+- `dashboard.html`
+- `dashboard.css`
+- `dashboard.js`
+- `popup.html`
+- `popup.css`
+- `popup.js`
+- `visual.js`
 
+These files power the popup interface, dashboard, and all visualizations.
+---
+### **Core Extension Logic (root directory)**
+The main behavior of the extension lives at the root:
+
+- `background.js` — handles background tasks, rule updates, cleanup  
+- `content.js` — runs in webpage context (if needed)  
+- `rulesEngine.js` — generates and manages DNR rules  
+- `storage.js` — handles storing and retrieving data  
+- `tracker_domains.txt` — list of known tracking domains  
+
+---
+
+### **Configuration Files**
+- `manifest.json` — Chrome MV3 configuration  
+- `.gitignore`  
+- `icon.png`
+
+---
+
+### **Documentation**
+- `README.md` — main project guide  
+- `Developer_MANUAL.md` — developer instructions  
+- `USER_MANUAL.md` — end-user guide  
+- `coding-guidelines.md` — style and contribution standards  
+
+---
+
+### **Node & Testing Resources**
+Node.js is used for testing and automation:
+
+- `package.json`  
+- `package-lock.json`  
 
 Tests are stored in the `tests/` directory (not shown in screenshot but required by the test runner).
-
----
-
-
-### How to build the software
-
-CookiesShallNotPass is a Chrome extension built with **HTML, CSS, JavaScript**, and **Manifest V3**.  
-There is no compilation step — you simply install dependencies and load the project into Chrome.
-
----
-
-1. Open your terminal and run:
-   ```bash
-   git clone https://github.com/AryanV08/CookiesShallNotPass.git
-   cd CookiesShallNotPass
-
-
----
-
-
-### How to test the software
-To run the provided test suite, run:  
-- `npm run test`
-in the root directory of the repository.  
-
-The tests will automatically be run on each commit and pull request to the github repository.  
 
 ---
 
