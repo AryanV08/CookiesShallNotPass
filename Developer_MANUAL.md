@@ -16,17 +16,60 @@
 ---
 
 ### The layout of your directory structure
-The CookiesShallNotPass repository is organized to clearly separate source code, testing resources, documentation, and automated workflow configurations.  
+---
 
-- The main source files for the Chrome extension are located in the project’s root directory, including **index.html, index.css, main.js, and whitelist.js**, which together define the popup interface, core logic, and whitelist functionality of the extension.  
-- The **manifest.json** file serves as the central configuration file recognized by Chrome, specifying metadata, permissions, and entry points.  
-- Automated workflows for continuous integration and testing are stored in the **.github/workflows** directory.  
-- The **tests** folder contains unit and integration test scripts that verify both the frontend and backend components.  
-- Supporting metadata and dependencies for Node.js testing are managed through **package.json** and **package-lock.json**.  
-- The **USER_MANUEL.md** file provides end-user instructions, whereas **coding-guidelines.md** outlines standards and contribution rules for developers.  
-- General project information and setup instructions can be found in the **README.md**.  
+### **UI Layer (`/UI`)**
+All user-facing interface code is stored inside the `UI` folder:
+
+- `d3.min.js`
+- `dashboard.html`
+- `dashboard.css`
+- `dashboard.js`
+- `popup.html`
+- `popup.css`
+- `popup.js`
+- `visual.js`
+
+These files power the popup interface, dashboard, and all visualizations.
 
 ---
+
+### **Core Extension Logic (root directory)**
+The main behavior of the extension lives at the root:
+
+- `background.js` — handles background tasks, rule updates, cleanup  
+- `content.js` — runs in webpage context (if needed)  
+- `rulesEngine.js` — generates and manages DNR rules  
+- `storage.js` — handles storing and retrieving data  
+- `tracker_domains.txt` — list of known tracking domains  
+
+---
+
+### **Configuration Files**
+- `manifest.json` — Chrome MV3 configuration  
+- `.gitignore`  
+- `icon.png`
+
+---
+
+### **Documentation**
+- `README.md` — main project guide  
+- `Developer_MANUAL.md` — developer instructions  
+- `USER_MANUAL.md` — end-user guide  
+- `coding-guidelines.md` — style and contribution standards  
+
+---
+
+### **Node & Testing Resources**
+Node.js is used for testing and automation:
+
+- `package.json`  
+- `package-lock.json`  
+
+Tests are stored in the `tests/` directory (not shown in screenshot but required by the test runner).
+
+---
+
 
 ### How to build the software
 
