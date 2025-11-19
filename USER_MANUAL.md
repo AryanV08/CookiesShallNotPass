@@ -9,18 +9,37 @@ To install the latest published version of the extension, download it from the C
 ---
 
 
-### How to install the software from source
+### How to Install the Software From Source
+
 Since the extension hasn’t been published to the Chrome Web Store yet, you can install it manually from source:
+
+Repository:  
 https://github.com/AryanV08/CookiesShallNotPass/tree/main
 
--Download or clone this repository to your local machine.
--Open Google Chrome and navigate to chrome://extensions/.
--Enable Developer mode using the toggle in the top right corner.
--Click “Load unpacked” and select the folder containing the extension’s source code.
--The extension should now appear in your toolbar, ready to use.
+1. **Download the code**
+   - Click **Code → Download ZIP**, or clone it with:
+     ```
+     git clone https://github.com/AryanV08/CookiesShallNotPass.git
+     ```
+
+2. **Open Chrome Extensions**
+   - In Google Chrome, go to:
+     ```
+     chrome://extensions/
+     ```
+
+3. **Enable Developer Mode**
+   - Turn on **Developer mode** using the toggle in the top-right corner.
+
+4. **Load the Extension**
+   - Click **Load unpacked**.
+   - Select the folder containing the extension’s source code.
+
+5. The extension will now appear in your Chrome toolbar and is ready to use.
+
 
 <img src="./images/load-unpacked.png" alt="How to load unpacked extension" width="300"/>
----
+
 
 #### How to run the software
 - Launch Google Chrome  
@@ -30,7 +49,7 @@ https://github.com/AryanV08/CookiesShallNotPass/tree/main
 - Pin CookiesShallNotPass for quick access if desired  
 - Click the extension icon to open the pop-up interface  
 
----
+
 
 #### How to use the software
 Once the extension is installed and enabled in Chrome, you can manage it easily through the popup interface and the dashboard.  
@@ -73,20 +92,29 @@ The popup gives you direct access to essential controls while browsing.
 - Click “Go to Dashboard (6)” in the popup to open the main management panel.  
 - The dashboard provides advanced tools and customization for your cookie preferences.  
 
-<img src="./images/dashboard.png" alt="Dashboard features" width="300"/>
+**Edit Preferences:**  
 
-**Edit Preferences (1):**  
+<img src="./images/preference.png" alt="Choosing Preference" width="500"/>
+
 - Manage your extension settings directly from the dashboard.  
   - Auto-Blocking: Turn automatic cookie blocking on or off globally.  
   - Blocker Status: Use the turn On/Off toggle to activate or pause cookie blocking. 
 
-**View and Edit Lists (2):**  
+**View and Edit Lists:**  
+
+<img src="./images/view-edit.png" alt="Whitelist and Blacklist features" width="500"/>
+
 - View all websites you’ve added to your Whitelist and Blacklist.  
 - Add or remove sites manually.  
 
-**Graphical Statistics (not implemented yet):**  
+**Graphical Statistics:**  
+
+<img src="./images/G-stats.png" alt="Graphical Data about cookies" width="500"/>
+
+
 - Visualize your browsing privacy.  
-  - Total cookies blocked vs. allowed  
+  - Total cookies blocked vs. allowed
+  - Cookies by domains
 
 **Import / Export Lists:**  
 <img src="./images/im-export.png" alt="Import/Export features" width="800"/>
@@ -94,6 +122,9 @@ The popup gives you direct access to essential controls while browsing.
 - Export: Download JSON or TXT snapshots of your current lists for backup or sharing across devices.  
 
 **Report a Bug:**  
+
+<img src="./images/reportBug.png" alt="To report a Bug" width="800"/>
+
 - Use the “Report a Bug” form directly from the dashboard.  
 - Include the affected website, a short description of what happened, and optional steps to reproduce or a screenshot.  
 
