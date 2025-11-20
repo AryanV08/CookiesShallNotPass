@@ -3,10 +3,43 @@
 ### High Level Description
 **CookiesShallNotPass** is a chrome extension that automatically manages website cookie preferences. It blocks non-essential cookies, removes intrusive cookie banners, and allows users to whitelist trusted sites or import pre-defined blocklists making cookie management automatic, simple, and private.
 
-### How to install the software
+### How to install the software from Chrome(in progress)
 To install the latest published version of the extension, download it from the Chrome web store.
 
 ---
+
+
+### How to Install the Software From Source
+
+Since the extension hasn’t been published to the Chrome Web Store yet, you can install it manually from source:
+
+Repository:  
+https://github.com/AryanV08/CookiesShallNotPass/tree/main
+
+1. **Download the code**
+   - Click **Code → Download ZIP**, or clone it with:
+     ```
+     git clone https://github.com/AryanV08/CookiesShallNotPass.git
+     ```
+
+2. **Open Chrome Extensions**
+   - In Google Chrome, go to:
+     ```
+     chrome://extensions/
+     ```
+
+3. **Enable Developer Mode**
+   - Turn on **Developer mode** using the toggle in the top-right corner.
+
+4. **Load the Extension**
+   - Click **Load unpacked**.
+   - Select the folder containing the extension’s source code.
+
+5. The extension will now appear in your Chrome toolbar and is ready to use.
+
+
+<img src="./images/load-unpacked.png" alt="How to load unpacked extension" width="300"/>
+
 
 #### How to run the software
 - Launch Google Chrome  
@@ -16,11 +49,14 @@ To install the latest published version of the extension, download it from the C
 - Pin CookiesShallNotPass for quick access if desired  
 - Click the extension icon to open the pop-up interface  
 
+
+
 #### How to use the software
 Once the extension is installed and enabled in Chrome, you can manage it easily through the popup interface and the dashboard.  
 
 This section explains how to use all main features.  
 
+---
 **Opening the Extension Popup**  
 - Click the CookiesShallNotPass icon in the Chrome toolbar.  
 - This opens a compact popup window, your main control center for quick cookie management.  
@@ -28,49 +64,67 @@ This section explains how to use all main features.
 **Popup Features**  
 The popup gives you direct access to essential controls while browsing.  
 
-- **Enable or Disable the Blocker:**  
+
+<img src="./images/popup.png" alt="Popup features" width="300"/>
+
+- **Enable or Disable the Blocker (1):**  
   - Use the turn On/Off toggle to activate or pause cookie blocking.  
-  - When enabled, the extension automatically blocks unwanted cookies based on your preferences and lists. When disabled, all cookies will behave normally as in Chrome.  
+  - When enabled, the extension automatically blocks non-essential cookies based on your preferences and lists. When disabled, all cookies will behave normally as in Chrome.  
 
-- **Current Site Display:**  
-  - The popup shows the current website you’re visiting. This helps confirm which site you’re managing before adding it to a list.  
-
-- **Cookie Stats:**  
+- **Cookie Stats (2):**  
   - Cookies Blocked So Far: Number of cookies that have been blocked so far.  
   - Cookies Allowed: Number of cookies permitted so far.  
   - Banners Removed: Number of cookie banners removed so far.  
 
+- **Current Site Display (3):**  
+  - The popup shows the current website you’re visiting. This helps confirm which site you’re managing before adding it to a list.  
+
 **Managing Sites**  
-- **Add to Whitelist:**  
+- **Add to Whitelist (4):**  
   - Click “Add to Whitelist” to allow cookies from the current domain.  
   - Whitelisted sites will bypass the blocker, keeping their cookies active.  
 
-- **Add to Blacklist:**  
-  - Click “Block” to completely block cookies on the current website.  
+- **Add to Blacklist (5):**  
+  - Click “Block” to completely block non-essential cookies on the current website.  
   - The site will be added to your blacklist automatically.  
 
 **Dashboard**  
-- Click “Go to Dashboard” in the popup to open the main management panel.  
+- Click “Go to Dashboard (6)” in the popup to open the main management panel.  
 - The dashboard provides advanced tools and customization for your cookie preferences.  
 
+**Edit Preferences:**  
+
+<img src="./images/preference.png" alt="Choosing Preference" width="500"/>
+
+- Manage your extension settings directly from the dashboard.  
+  - Auto-Blocking: Turn automatic cookie blocking on or off globally.  
+  - Blocker Status: Use the turn On/Off toggle to activate or pause cookie blocking. 
+
 **View and Edit Lists:**  
+
+<img src="./images/view-edit.png" alt="Whitelist and Blacklist features" width="500"/>
+
 - View all websites you’ve added to your Whitelist and Blacklist.  
 - Add or remove sites manually.  
 
-**Edit Preferences:**  
-- Manage your extension settings directly from the dashboard.  
-  - Auto-Blocking: Turn automatic cookie blocking on or off globally.  
-  - Blocker Status: Use the turn On/Off toggle to activate or pause cookie blocking.  
-
 **Graphical Statistics:**  
+
+<img src="./images/G-stats.png" alt="Graphical Data about cookies" width="500"/>
+
+
 - Visualize your browsing privacy.  
-  - Total cookies blocked vs. allowed  
+  - Total cookies blocked vs. allowed
+  - Cookies by domains
 
 **Import / Export Lists:**  
-- Import: Upload a TXT or JSON file of sites to whitelist or blacklist.  
-- Export: Download your current lists for backup or sharing across devices.  
+<img src="./images/im-export.png" alt="Import/Export features" width="800"/>
+- Import: Upload a TXT (with [whitelist]/[blacklist] sections, one domain per line) or JSON file of sites to whitelist or blacklist.  
+- Export: Download JSON or TXT snapshots of your current lists for backup or sharing across devices.  
 
 **Report a Bug:**  
+
+<img src="./images/reportBug.png" alt="To report a Bug" width="800"/>
+
 - Use the “Report a Bug” form directly from the dashboard.  
 - Include the affected website, a short description of what happened, and optional steps to reproduce or a screenshot.  
 
@@ -109,101 +163,6 @@ Once the startup process is complete, ie, the extension icon is clicked and succ
 
 ---
 
-# Developer Documentation
- 
-#### How to obtain the source code
-1. Click the small puzzle icon in the top right corner of your Chrome browser.  
-2. Locate the CookiesShallNotPass extension in the list and click it.  
-3. Once clicked, the dashboard will pop up.  
-4. Scroll to the bottom of the dashboard and click the “View Source” hyperlink.  
-5. You will be redirected to the official GitHub repository in a new tab.  
-6. To clone the repository locally, on the GitHub page, click the “Code” button (green dropdown).  
-7. Copy the HTTPS URL: https://github.com/AryanV08/CookiesShallNotPass.git  
-8. Open a terminal or command prompt and run:  
-- `git clone https://github.com/AryanV08/CookiesShallNotPass.git`
-- `cd CookiesShallNotPass`
-9. Now you can see all the source code!  
 
----
-
-### The layout of your directory structure
-The CookiesShallNotPass repository is organized to clearly separate source code, testing resources, documentation, and automated workflow configurations.  
-
-- The main source files for the Chrome extension are located in the project’s root directory, including **index.html, index.css, main.js, and whitelist.js**, which together define the popup interface, core logic, and whitelist functionality of the extension.  
-- The **manifest.json** file serves as the central configuration file recognized by Chrome, specifying metadata, permissions, and entry points.  
-- Automated workflows for continuous integration and testing are stored in the **.github/workflows** directory.  
-- The **tests** folder contains unit and integration test scripts that verify both the frontend and backend components.  
-- Supporting metadata and dependencies for Node.js testing are managed through **package.json** and **package-lock.json**.  
-- The **USER_MANUEL.md** file provides end-user instructions, whereas **coding-guidelines.md** outlines standards and contribution rules for developers.  
-- General project information and setup instructions can be found in the **README.md**.  
-
----
-
-### How to build the software
-CookiesShallNotPass uses a simple front-end build system based on HTML, CSS, Javascript, and Chrome’s Manifest V3 framework.  
-
-**To build the software:**  
-1. Clone the repository  
-2. Verify the project structure  
-Ensure the following folders are present:  
-- Manifest.json  
-- /ui  
-- /background  
-- /conent  
-- /rulesengine  
-- /storage  
-
-3. Install nodejs 20.x or above at https://nodejs.org/en/download  
-4. Install dependencies with `npm install`  
-5. Load into Chrome for testing  
-- Open Chrome -> Settings -> Extensions  
-- Enable Developer mode  
-- Click “Load unpacked”  
-- Select the project folder  
-- The extension icon “CookiesShallNotPass” will appear in the toolbar  
-
-6. Run and verify components  
-- Open the popup -> confirm the dashboard and settings load correctly  
-- Modify preferences or import whitelist/blacklist files to confirm UI-backend integration  
-
----
-
-### How to test the software
-To run the provided test suite, run:  
-- `npm run test`
-in the root directory of the repository.  
-
-The tests will automatically be run on each commit and pull request to the github repository.  
-
----
-
-### How to add new test
-1. Tests are stored in the folder named **tests**  
-2. At the top of the test file, import the function or module you want to test  
-3. **Write a Test Case:** Each test is defined using the `test()` or `it()` function.  
-4. **Group Tests with describe():** For better organization, related tests are grouped using `describe()`.  
-5. **Run the Test:** Run Jest with:  
-- `npm run test`
-
----
-
-### How to build a release of the software
-- **Check the code**  
-Make sure all changes are saved and the code is up to date.  
-
-- **Run tests**  
-In the project folder:  
-- `npm run test`
-Make sure all tests pass.  
-
-- **Load the extension in Chrome**  
-- Open Chrome → Settings → Extensions → Enable Developer mode  
-- Click Load unpacked and select the project folder  
-- Check that the extension icon appears and the popup opens correctly
-
-- **Test key features**
-- Turn the blocker on/off
-- Add/remove sites from whitelist/blacklist
-- Open the dashboard and confirm stats and settings work
 
 

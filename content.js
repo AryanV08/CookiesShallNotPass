@@ -1,13 +1,16 @@
 
+// Whitelisted session cookies that should never be blocked.
 const ESSENTIAL_COOKIES = ["PHPSESSID", "JSESSIONID", "sessionid", "csrf_token", "auth_token"];
 console.log("[CSP] content script loaded");
 
 // ---------------- Message Helper ----------------
+// Send a message to the background script and return a promise for the response.
 function sendMessage(msg) {
   return new Promise(resolve => chrome.runtime.sendMessage(msg, res => resolve(res)));
 }
 
 // ---------------- Banner Handling ----------------
+// Find cookie/consent banners within the current document (and any accessible iframes).
 function findBanners(root = document) {
   let banners = [];
   const selectors = [
@@ -21,12 +24,14 @@ function findBanners(root = document) {
 
   for (const frame of root.querySelectorAll('iframe')) {
     try {
+      // Recursively scan iframe documents when same-origin access is allowed.
       if (frame.contentDocument) banners.push(...findBanners(frame.contentDocument));
     } catch(e){}
   }
   return banners;
 }
 
+// Attempt to click deny/essential-only actions on a banner and remove it if successful
 function interactWithBanner(banner) {
   const denyTexts = ['reject', 'reject all', 'decline', 'decline all', 'deny', 'deny all', 'reject all cookies'];
   const essentialsTexts = ['accept necessary', 'necessary only', 'only necessary', 'accept essential', 'do not sell or share my personal information', 'essential only', 'only essential'];
@@ -37,6 +42,7 @@ function interactWithBanner(banner) {
 
   let clicked = false;
 
+  // Prefer hard opt-out actions (deny/reject) when available.
   for (const el of interactiveEls) {
     const txt = (el.innerText || el.value || el.getAttribute('aria-label') || '').trim().toLowerCase();
     if (denyTexts.some(d => txt.includes(d))) {
@@ -46,6 +52,7 @@ function interactWithBanner(banner) {
   }
 
   if (!clicked) {
+    // Fall back to “essentials only” style actions for softer opt-outs
     for (const el of interactiveEls) {
       const txt = (el.innerText || el.value || el.getAttribute('aria-label') || '').trim().toLowerCase();
       if (essentialsTexts.some(e => txt.includes(e))) {
@@ -55,6 +62,7 @@ function interactWithBanner(banner) {
     }
   }
 
+  // Uncheck opt-in toggles that are not explicitly marked as essential.
   for (const el of interactiveEls) {
     if ((el.type === 'checkbox' || el.type === 'radio') && !el.dataset.essential) {
       try { el.checked = false; } catch(e){}
@@ -68,6 +76,7 @@ function interactWithBanner(banner) {
   return false;
 }
 
+// Scan for banners and report how many were dismissed.
 async function handleBanners() {
   const banners = findBanners();
   if (!banners || banners.length === 0) return 0;
@@ -79,6 +88,7 @@ async function handleBanners() {
   return removedCount;
 }
 
+// Observe DOM mutations so that dynamically injected banners can be handled
 function startObserver() {
   const obs = new MutationObserver(mutations => {
     if (!mutations.some(m => m.addedNodes && m.addedNodes.length > 0)) return;
@@ -88,6 +98,7 @@ function startObserver() {
 }
 
 // ---------------- Cookie Blocking ----------------
+// Override document.cookie to prevent non-essential cookies when auto-blocking is active.
 (async function blockCookies() {
   const state = (await sendMessage({ type: "GET_STATE" })).state;
   const domain = window.location.hostname.replace(/^www\./, '');
@@ -111,6 +122,7 @@ function startObserver() {
 })();
 
 // ---------------- Init ----------------
+// Run initial banner sweep and schedule follow-up passes for delayed banners.
 (async function init() {
   await handleBanners();
   startObserver();
@@ -118,6 +130,7 @@ function startObserver() {
 })();
 
 // ---------------- Message Listener ----------------
+// Allow the background page or popup to trigger banner removal manually.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "REMOVE_BANNERS") {
     handleBanners().then(cnt => sendResponse({ removed: cnt })).catch(() => sendResponse({ removed: 0 }));

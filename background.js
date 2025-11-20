@@ -1,6 +1,6 @@
 // Import necessary modules for storage and rules management
-import { Storage } from './storage.js';
-import { updateRules, ESSENTIAL_COOKIES } from './rulesEngine.js';
+import { Storage, SYNC_INTERVAL } from './storage.js';
+import { updateRules, isEssential } from './rulesEngine.js';
 
 // Check if the script is running in a test environment
 const IN_TEST =
@@ -16,19 +16,118 @@ let state = {
   blacklist: [],
   whitelist: [],
   active: true,
-  autoBlock: true
+  autoBlock: true,
+  allowedCookies: {},
+  blockedCookies: {}
 };
 
 // Set to track cookies that have been blocked recently (to prevent repeated blocking within a short time)
 const recentlyBlockedCookies = new Set();
 const BLOCK_COOLDOWN_TIME = 2 * 1000; // 2 seconds cooldown
+
 // Function to check if a domain matches the target domain (handles subdomains)
 function domainMatch(cookieDomain, targetDomain) {
   return cookieDomain === targetDomain || cookieDomain.endsWith('.' + targetDomain);
 }
+
 // Function to save the current state to storage
 async function saveState() {
   await Storage.set('state', state);
+}
+
+// Remove a cookie permanently
+async function removeCookie(cookie, domain) {
+  const cookieKey = `${domain}:${cookie.name}`;
+  
+  // Skip if recently blocked
+  if (recentlyBlockedCookies.has(cookieKey)) {
+    return;
+  }
+
+  console.log("[CSP] Removing cookie:", cookie.name, "Domain:", domain);
+
+  // Track in blocked cookies
+  if (!state.blockedCookies[domain]) {
+    state.blockedCookies[domain] = {};
+  }
+  if (!state.blockedCookies[domain][cookie.name]) {
+    state.blockedCookies[domain][cookie.name] = 0;
+  }
+  state.blockedCookies[domain][cookie.name]++;
+  state.blocked++;
+
+  // Remove cookie from all possible URLs
+  const protocols = ['https:', 'http:'];
+  const basePaths = ['/', cookie.path || '/'];
+  
+  for (const protocol of protocols) {
+    for (const path of basePaths) {
+      const cookieUrl = `${protocol}//${domain}${path}`;
+      
+      try {
+        await new Promise(resolve => {
+          chrome.cookies.remove({
+            url: cookieUrl,
+            name: cookie.name,
+            storeId: cookie.storeId
+          }, (details) => {
+            if (details) {
+              console.log(`[CSP] Cookie deleted: ${cookie.name}, URL: ${cookieUrl}`);
+            }
+            resolve();
+          });
+        });
+      } catch (error) {
+        // Silent fail - cookie might not exist for this URL
+      }
+    }
+  }
+
+  // Add to recently blocked to prevent immediate recreation
+  recentlyBlockedCookies.add(cookieKey);
+  setTimeout(() => recentlyBlockedCookies.delete(cookieKey), BLOCK_COOLDOWN_TIME);
+  
+  await saveState();
+}
+
+// Clean all existing non-essential cookies once at startup
+async function cleanAllExistingCookies() {
+  if (!state.active) return;
+  
+  console.log("[CSP] Running one-time startup cookie cleanup");
+  
+  try {
+    const allCookies = await new Promise(resolve => {
+      chrome.cookies.getAll({}, resolve);
+    });
+
+    let cleanedCount = 0;
+    
+    for (const cookie of allCookies) {
+      const domain = cookie.domain.replace(/^\./, '');
+      
+      // Check whitelist
+      const inWhitelist = state.whitelist.some(d => domainMatch(domain, d));
+      if (inWhitelist) continue;
+      
+      // Check if cookie is essential
+      const isCookieEssential = await isEssential(cookie);
+      if (isCookieEssential) continue;
+      
+      // Check blacklist or auto-block
+      if (state.autoBlock || state.blacklist.includes(domain)) {
+        await removeCookie(cookie, domain);
+        cleanedCount++;
+      }
+    }
+    
+    console.log(`[CSP] Startup cleanup completed: removed ${cleanedCount} cookies. Total blocked: ${state.blocked}`);
+    state.blocked += cleanedCount;
+    await saveState();
+    
+  } catch (error) {
+    console.error("[CSP] Error during startup cookie cleanup:", error);
+  }
 }
 
 // Initialize the background process (loading state and rules)
@@ -39,33 +138,42 @@ export async function initBackground(chromeAPI = chrome) {
     // Attempt to load any synced storage data
     await Storage.loadFromSync();
   } catch (_) {}
+  
   // Retrieve saved state and apply it
   const saved = await Storage.get('state');
   if (saved) state = saved;
 
   if (typeof updateRules === 'function') {
-    await updateRules();
+    await updateRules(state);
   }
+
+  // Clean all existing cookies once at startup
+  setTimeout(() => {
+    cleanAllExistingCookies();
+  }, 1000);
 
   // Listen for messages from other parts of the extension
   if (chromeAPI?.runtime?.onMessage?.addListener) {
     chromeAPI.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       (async () => {
-                switch (msg.type) {
+        switch (msg.type) {
           case 'GET_STATE':
-            // Respond with the current state
             sendResponse({ success: true, state });
             break;
 
           case 'UPDATE_STATE':
-            // Update the state and save it
             if (msg.state) state = { ...state, ...msg.state };
             await saveState();
+            await updateRules(state);
+            
+            // If activating the blocker, clean existing cookies
+            if (state.active) {
+              setTimeout(() => cleanAllExistingCookies(), 500);
+            }
             sendResponse({ success: true, state });
             break;
 
           case 'BLOCK_SITE': {
-            // Add a domain to the blacklist and remove it from the whitelist
             const domain = msg.domain;
             if (!state.blacklist.includes(domain)) state.blacklist.push(domain);
             state.whitelist = state.whitelist.filter(d => d !== domain);
@@ -75,7 +183,6 @@ export async function initBackground(chromeAPI = chrome) {
           }
 
           case 'WHITELIST_SITE': {
-            // Add a domain to the whitelist and remove it from the blacklist
             const domain = msg.domain;
             if (!state.whitelist.includes(domain)) state.whitelist.push(domain);
             state.blacklist = state.blacklist.filter(d => d !== domain);
@@ -85,34 +192,50 @@ export async function initBackground(chromeAPI = chrome) {
           }
 
           case 'LOG_BANNER_REMOVED':
-            // Increment the number of removed banners
             state.bannersRemoved += msg.count || 1;
             await saveState();
             sendResponse({ success: true, stats: state });
+            break;
+
+          case 'IS_ESSENTIAL':
+            {
+              const essential = await isEssential(msg.cookie);
+              sendResponse({ essential });
+            }
             break;
 
           default:
             sendResponse({ success: false });
         }
       })();
-      return true; // async
+      return true;
     });
   }
 
-  // Listen for changes in cookies (only triggered after cookies are set or modified)
+  // Listen for changes in cookies
   if (chromeAPI?.cookies?.onChanged?.addListener) {
-    chrome.cookies.onChanged.addListener(change => {
-    // Ignore if the blocker is inactive or the cookie is removed
-    if (!state.active || change.removed) return;
-       const cookie = change.cookie;
-      const domain = cookie.domain.replace(/^\./, '');  // Remove leading dot from the domain
-      const inWhitelist = state.whitelist.some(d => domainMatch(domain, d)); // Check if domain is in the whitelist
+    chrome.cookies.onChanged.addListener(async change => {
+      if (!state.active || change.removed) return;
+
+      const cookie = change.cookie;
+      const domain = cookie.domain.replace(/^\./, '');
+      const inWhitelist = state.whitelist.some(d => domainMatch(domain, d));
 
       // Allow cookies from whitelisted domains or essential cookies
-      if (inWhitelist || ESSENTIAL_COOKIES.includes(cookie.name)) {
+      const isCookieEssential = await isEssential(cookie);
+      if (inWhitelist || isCookieEssential) {
         console.log("[CSP] Cookie allowed via whitelist or essential:", cookie.name, "Domain:", domain);
-        state.allowed++;  // Increment allowed cookies counter
-        saveState(); 
+        state.allowed++;
+
+        // Track allowed cookies
+        if (!state.allowedCookies[domain]) {
+          state.allowedCookies[domain] = {};
+        }
+        if (!state.allowedCookies[domain][cookie.name]) {
+          state.allowedCookies[domain][cookie.name] = 0;
+        }
+        state.allowedCookies[domain][cookie.name]++;
+        await saveState(); 
         return;
       }
 
@@ -126,32 +249,7 @@ export async function initBackground(chromeAPI = chrome) {
       // Block the cookie if the domain is in the blacklist or auto-block is enabled
       if (state.autoBlock || state.blacklist.includes(domain)) {
         console.log("[CSP] Cookie blocked via onChanged:", cookie.name, "Domain:", domain);
-        
-        // Function to attempt cookie deletion on both HTTP and HTTPS
-        const deleteCookie = (scheme) => {
-          const cookieUrl = `${scheme}://${domain}${cookie.path || '/'}`; // Ensure the path is included
-          chrome.cookies.remove({
-            url: cookieUrl,
-            name: cookie.name
-          }, function (details) {
-            if (details) {
-              console.log(`Cookie deleted (${scheme}):`, cookie.name, "Domain:", domain, "Path:", cookie.path || '/');
-            } else {
-              console.log(`Failed to delete cookie (${scheme}):`, cookie.name, "Domain:", domain, "Path:", cookie.path || '/');
-            }
-          });
-        };
-        
-        // Try deleting the cookie on HTTPS first
-        deleteCookie("https");
-        // If not deleted via HTTPS, try HTTP
-        deleteCookie("http");
-        
-        // Increment blocked cookies counter
-        state.blocked++;
-        saveState();  // Save state after incrementing
-        recentlyBlockedCookies.add(cookieKey);
-        setTimeout(() => recentlyBlockedCookies.delete(cookieKey), BLOCK_COOLDOWN_TIME);  // Remove from recently blocked set after cooldown
+        await removeCookie(cookie, domain);
       }
     });
   }
@@ -159,9 +257,9 @@ export async function initBackground(chromeAPI = chrome) {
   // Sync state data to cloud if not in test mode
   if (!IN_TEST) {
     setInterval(() => {
-      Storage.syncToCloud().catch(() => {});   // Attempt to sync every 5 minutes
-    }, 5 * 60 * 1000);
-    // Sync when the extension is suspended
+      Storage.syncToCloud().catch(() => {});
+    }, SYNC_INTERVAL);
+    
     if (chromeAPI?.runtime?.onSuspend?.addListener) {
       chromeAPI.runtime.onSuspend.addListener(() => Storage.syncToCloud());
     }
@@ -171,6 +269,8 @@ export async function initBackground(chromeAPI = chrome) {
 // Auto-init only outside tests
 if (!IN_TEST) {
   console.log('[CSP] background loaded');
-  // fire-and-forget
-  initBackground().catch(err => console.warn('[CSP] init error', err));
+  initBackground().catch(err => {
+    console.error('[CSP] init error', err);
+    console.error('[CSP] Stack:', err?.stack);
+  });
 }

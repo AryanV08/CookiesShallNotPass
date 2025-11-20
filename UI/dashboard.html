@@ -7,8 +7,11 @@
   <title>CookiesShallNotPass Dashboard</title>
   <!-- Link to external CSS file -->
   <link rel="stylesheet" href="dashboard.css">
-  <!-- Link to external JavaScript file -->
-  <script src="dashboard.js" defer></script>
+  <!-- Load D3.js visualization library -->
+  <script src="./d3.min.js"></script>
+  <!-- Load main application JavaScript -->
+  <script src="visual.js" type="module"></script>
+  <script src="dashboard.js" type="module"></script>
 </head>
 <body>
   <div class="dashboard-container">
@@ -85,6 +88,32 @@
       </div>
     </section>
 
+        <!-- Visualization Section -->
+    <section class="stats" id="chartSection">
+      <h2>Cookies by Domain</h2>
+      <div class="visualization-container">
+        <div id="chart"></div>
+      </div>
+      </style>
+    </section>
+
+  </div>
+
+    <!-- New section to display allowed vs blocked as charts -->
+<section class="cookies" id="cookiesSection">
+  <h2>Cookies Overview</h2>
+  <div class="cookie-chart-grid">
+    <div class="cookie-card">
+      <h3>Allowed vs Blocked</h3>
+      <div id="cookiePieOverall" class="cookie-pie"></div>
+    </div>
+    <div class="cookie-card">
+      <h3>Top Domains</h3>
+      <div id="cookiePieTopDomains" class="cookie-pie"></div>
+    </div> 
+  </div>
+</section>
+
     <!-- Site Lists Section -->
     <section class="lists" id="listsSection">
       <header class="section-heading">
@@ -131,20 +160,22 @@
     <!-- Import & Export Section -->
     <section class="import-export" id="importExportSection">
       <h2>Import &amp; Export Lists</h2>
-      <p class="section-subtitle">Back up your configuration or share it with teammates using the JSON format.</p>
+      <p class="section-subtitle">Back up your configuration or share it with teammates using JSON or TXT files.</p>
       <div class="import-grid">
         <!-- File input and buttons -->
         <div class="import-controls">
-          <input type="file" id="importFile" accept="application/json">
+          <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain">
           <div class="button-row">
             <button id="importBtn">Import</button>
-            <button id="exportBtn" class="secondary">Export Current Lists</button>
+            <button id="exportBtn" class="secondary">Export JSON</button>
+            <button id="exportTxtBtn" class="secondary">Export TXT</button>
           </div>
         </div>
         <!-- Import/Export Help Text -->
         <div class="import-help">
           <ul>
             <li>Import files created by this extension to sync across browsers.</li>
+            <li>TXT files support [whitelist] / [blacklist] sections with one domain per line.</li>
             <li>Export before reinstalling or when sharing curated lists.</li>
           </ul>
         </div>
