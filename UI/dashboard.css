@@ -417,6 +417,30 @@ button.secondary:hover {
 }
 /* End report link styles */
 
+/* Header layout for title + dark mode toggle */
+.dashboard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-label {
+  font-size: 12px;
+  color: #d6dcf5; /* will get overridden by light theme if you added that */
+}
 
 /* Responsive tweaks */
 @media (min-width: 600px) {
@@ -431,3 +455,97 @@ button.secondary:hover {
     align-items: center;
   }
 }
+
+/* Light theme overrides */
+body.light-theme {
+  background: linear-gradient(135deg, #fdfbfb, #ebedee);
+  color: #0f172a;
+}
+
+body.light-theme section {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+body.light-theme .tagline {
+  color: #475569;
+}
+
+body.light-theme .section-subtitle,
+body.light-theme .stat-label,
+body.light-theme .metric-label,
+body.light-theme .empty-preview,
+body.light-theme .section-footnote,
+body.light-theme .import-help,
+body.light-theme .report-instructions {
+  color: #64748b;
+}
+
+body.light-theme .toggle-card,
+body.light-theme .stat-card,
+body.light-theme .list-preview-card,
+body.light-theme .report-card {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+body.light-theme .metric-pill {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+body.light-theme .chip {
+  background: rgba(226, 232, 240, 0.9);
+}
+
+body.light-theme .chip.more {
+  border-color: rgba(148, 163, 184, 0.8);
+}
+
+body.light-theme input[type="text"],
+body.light-theme textarea {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+body.light-theme button {
+  background: #0f172a;
+  color: #f9fafb;
+}
+
+body.light-theme button:hover {
+  background: #1e293b;
+}
+
+body.light-theme button.secondary {
+  background: transparent;
+  color: #1e293b;
+  border-color: rgba(148, 163, 184, 0.9);
+}
+
+body.light-theme button.secondary:hover {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+body.light-theme .list-remove {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+body.light-theme .list-remove:hover {
+  background: rgba(148, 163, 184, 0.35);
+}
+
+body.light-theme .report-link {
+  color: #1d4ed8;
+}
+
+body.light-theme .code-block {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+body.light-theme .slider {
+  background-color: #cbd5f5;
+}
+
+body.light-theme input:checked + .slider {
+  background-color: #2563eb;
+}
+

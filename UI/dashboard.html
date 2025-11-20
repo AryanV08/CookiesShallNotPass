@@ -14,9 +14,24 @@
   <div class="dashboard-container">
     <!-- Dashboard Header -->
     <header class="dashboard-header" id="overview">
-      <h1>CookiesShallNotPass Dashboard</h1>
-      <p class="tagline">Review your protection status, tune automation controls, and manage every advanced tool in one place.</p>
+      <div class="header-row">
+        <h1>CookiesShallNotPass Dashboard</h1>
+
+        <!-- Dark Mode toggle in header (top-right) -->
+        <div class="header-actions">
+          <span class="theme-label">Dark mode</span>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+
+      <p class="tagline">
+        Review your protection status, tune automation controls, and manage every advanced tool in one place.
+      </p>
     </header>
+
 
     <!-- Protection Controls Section -->
     <section class="prefs" id="controlsSection">
@@ -152,9 +167,9 @@
           <p class="report-instructions">
             Click
             <a id="reportLink" class="report-link"
-              href="https://forms.gle/PVQQTFvmCxT3DTET9"
+              href="https://github.com/AryanV08/CookiesShallNotPass/issues"
               target="_blank" rel="noopener noreferrer">Report a bug</a>
-            to open the Google Form and describe the issue.
+            to open GitHub and click "New Issue" in the top right to describe it.
           </p>
         </div>
 
