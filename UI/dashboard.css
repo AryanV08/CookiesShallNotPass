@@ -774,7 +774,35 @@ button.secondary:hover {
 /* Light theme overrides */
 body.light-theme {
   background: linear-gradient(135deg, #fdfbfb, #ebedee);
+  color: #0b1120;
+
+  /* IMPORTANT: override theme variables used in charts & text */
+  --bg: #f3f4f6;
+  --bg-secondary: none;
+  --panel: #ffffff;
+  --panel-outline: rgba(148, 163, 184, 0.7);
+  --soft-outline: rgba(148, 163, 184, 0.35);
+  --text: #0b1120;      /* darker text for charts + legends */
+  --muted: #334155;     /* darker muted text */
+  --accent: #4f46e5;
+  --accent-alt: #0ea5e9;
+  --accent-soft: rgba(79, 70, 229, 0.08);
+  --danger: #b91c1c;
+}
+
+/* Deeper red for "Cookies Blocked" number in light mode */
+body.light-theme .stat-card:nth-child(1) .stat-number {
+  color: #b91c1c;
+}
+
+/* Made the "Dark mode" label darker in light theme */
+body.light-theme .theme-label {
   color: #0f172a;
+}
+
+/* Made the "Sort by" label in Cookies by Domain darker */
+body.light-theme .viz-sort-label {
+  color: #0f172a;  /* matches main text color */
 }
 
 body.light-theme section {
@@ -792,7 +820,7 @@ body.light-theme .empty-preview,
 body.light-theme .section-footnote,
 body.light-theme .import-help,
 body.light-theme .report-instructions {
-  color: #64748b;
+  color: #334155; /* darker than before */
 }
 
 body.light-theme .toggle-card,
@@ -817,11 +845,11 @@ body.light-theme .chip.more {
 body.light-theme input[type="text"],
 body.light-theme textarea {
   background: #f8fafc;
-  color: #0f172a;
+  color: #0b1120;
 }
 
 body.light-theme button {
-  background: #0f172a;
+  background: #0b1120;
   color: #f9fafb;
 }
 
@@ -862,6 +890,14 @@ body.light-theme .slider {
 
 body.light-theme input:checked + .slider {
   background-color: #2563eb;
+}
+
+/* Tooltips for charts: readable in light mode */
+body.light-theme .tooltip,
+body.light-theme .pie-tooltip {
+  background: #ffffff;
+  color: #0b1120;
+  border-color: rgba(148, 163, 184, 0.8);
 }
 
 .viz-sort-label {

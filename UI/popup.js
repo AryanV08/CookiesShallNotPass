@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   const blockBtn = document.getElementById("blockBtn");
   const currentSiteEl = document.getElementById("currentSite");
   const activeToggle = document.getElementById("extensionToggle"); // popup toggle
+  const body = document.body;
+
+  function applyTheme(theme) {
+    const mode = theme === 'light' ? 'light' : 'dark';
+    body.classList.toggle('light-theme', mode === 'light');
+  }
 
   function sendMessage(msg) {
     return new Promise(resolve => chrome.runtime.sendMessage(msg, res => resolve(res)));
@@ -20,6 +26,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     allowedCountEl.textContent = state.allowed ?? 0;
     bannersRemovedEl.textContent = state.bannersRemoved ?? 0;
     activeToggle.checked = state.active;
+
+    applyTheme(state.theme);
   }
 
   // --- Load initial state (includes stats) ---
