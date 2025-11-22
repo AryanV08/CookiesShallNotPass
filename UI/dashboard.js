@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const autoBlockToggle = document.getElementById("autoBlockToggle");
   const blockerActiveToggle = document.getElementById("blockerActiveToggle");
+  const themeToggle = document.getElementById("themeToggle"); // NEW
   
   // Pre-initialize toggles to avoid timing mismatch in tests
   if (autoBlockToggle) autoBlockToggle.checked = false;
@@ -294,6 +295,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Update toggles and lists
       autoBlockToggle.checked = state.autoBlock;
       blockerActiveToggle.checked = state.active;
+
+      // NEW: theme handling (default to dark if missing)
+      const theme = state.theme === "light" ? "light" : "dark";
+      document.body.classList.toggle("light-theme", theme === "light");
+      if (themeToggle) {
+        // Checked = dark, unchecked = light
+        themeToggle.checked = theme === "dark";
+      }
+
       updateListsUI(state);
     }
   }
@@ -312,6 +322,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     state.active = blockerActiveToggle.checked;
     await updateState(state);
   });
+
+  // NEW: theme toggle handler
+  if (themeToggle) {
+    themeToggle.addEventListener("change", async () => {
+      const state = await fetchState();
+      if (!state) return;
+
+      const isDark = themeToggle.checked;
+      state.theme = isDark ? "dark" : "light";
+      await updateState(state);
+
+      document.body.classList.toggle("light-theme", !isDark);
+    });
+  }
 
   // Add site to whitelist
   addWhitelistBtn.onclick = async () => {
