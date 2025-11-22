@@ -38,7 +38,7 @@ https://github.com/AryanV08/CookiesShallNotPass/tree/main
 5. The extension will now appear in your Chrome toolbar and is ready to use.
 
 
-<img src="./images/load-unpacked.png" alt="How to load unpacked extension" width="300"/>
+<img src="../images/load-unpacked.png" alt="How to load unpacked extension" width="300"/>
 
 
 #### How to run the software
@@ -65,7 +65,7 @@ This section explains how to use all main features.
 The popup gives you direct access to essential controls while browsing.  
 
 
-<img src="./images/popup.png" alt="Popup features" width="300"/>
+<img src="../images/popup.png" alt="Popup features" width="300"/>
 
 - **Enable or Disable the Blocker (1):**  
   - Use the turn On/Off toggle to activate or pause cookie blocking.  
@@ -94,7 +94,7 @@ The popup gives you direct access to essential controls while browsing.
 
 **Edit Preferences:**  
 
-<img src="./images/preference.png" alt="Choosing Preference" width="500"/>
+<img src="../images/preference.png" alt="Choosing Preference" width="500"/>
 
 - Manage your extension settings directly from the dashboard.  
   - Auto-Blocking: Turn automatic cookie blocking on or off globally.  
@@ -102,14 +102,14 @@ The popup gives you direct access to essential controls while browsing.
 
 **View and Edit Lists:**  
 
-<img src="./images/view-edit.png" alt="Whitelist and Blacklist features" width="500"/>
+<img src="../images/view-edit.png" alt="Whitelist and Blacklist features" width="500"/>
 
 - View all websites you’ve added to your Whitelist and Blacklist.  
 - Add or remove sites manually.  
 
 **Graphical Statistics:**  
 
-<img src="./images/G-stats.png" alt="Graphical Data about cookies" width="500"/>
+<img src="../images/G-stats.png" alt="Graphical Data about cookies" width="500"/>
 
 
 - Visualize your browsing privacy.  
@@ -117,13 +117,13 @@ The popup gives you direct access to essential controls while browsing.
   - Cookies by domains
 
 **Import / Export Lists:**  
-<img src="./images/im-export.png" alt="Import/Export features" width="800"/>
+<img src="../images/im-export.png" alt="Import/Export features" width="800"/>
 - Import: Upload a TXT (with [whitelist]/[blacklist] sections, one domain per line) or JSON file of sites to whitelist or blacklist.  
 - Export: Download JSON or TXT snapshots of your current lists for backup or sharing across devices.  
 
 **Report a Bug:**  
 
-<img src="./images/reportBug.png" alt="To report a Bug" width="800"/>
+<img src="../images/reportBug.png" alt="To report a Bug" width="800"/>
 
 - Use the “Report a Bug” form directly from the dashboard.  
 - Include the affected website, a short description of what happened, and optional steps to reproduce or a screenshot.  

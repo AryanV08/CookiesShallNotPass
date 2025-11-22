@@ -1,14 +1,9 @@
 # Developer Documentation
 
----
-
 ## How to Obtain the Source Code
 
-### ** Clone Directly from GitHub**
-1. Visit the repository:  
-   **https://github.com/AryanV08/CookiesShallNotPass**
-2. Click the green **Code** button and copy the **HTTPS URL**.
-3. Open your terminal and run:
+### **Clone Directly from GitHub**
+1. Open your terminal and run:
    ```bash
    git clone https://github.com/AryanV08/CookiesShallNotPass.git
    cd CookiesShallNotPass
