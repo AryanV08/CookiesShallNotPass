@@ -2,6 +2,64 @@
 // Import visualization module
 import { visualization } from './visual.js';
 
+export function parseJsonLists(text) {
+  const obj = JSON.parse(text);
+  return {
+    whitelist: Array.isArray(obj.whitelist) ? obj.whitelist : [],
+    blacklist: Array.isArray(obj.blacklist) ? obj.blacklist : []
+  };
+}
+
+export function parseTxtLists(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'));
+  const lists = { whitelist: [], blacklist: [] };
+  let current = 'whitelist';
+  lines.forEach(line => {
+    const section = line.match(/^\[(whitelist|blacklist)\]$/i);
+    if (section) {
+      current = section[1].toLowerCase();
+      return;
+    }
+    const inline = line.match(/^(whitelist|blacklist)\s*[:|-]\s*(.+)$/i);
+    if (inline) {
+      lists[inline[1].toLowerCase()].push(inline[2].trim());
+      return;
+    }
+    lists[current].push(line);
+  });
+  return lists;
+}
+
+export function mergeLists(state, additions) {
+  state.whitelist = Array.from(new Set([...(additions.whitelist || []), ...(state.whitelist || [])]));
+  state.blacklist = Array.from(new Set([...(additions.blacklist || []), ...(state.blacklist || [])]));
+  return state;
+}
+
+export function buildTxtExport(state = { whitelist: [], blacklist: [] }) {
+  const buildSection = (title, entries = []) => {
+    const header = `[${title}]`;
+    const body = entries.length ? entries.join('\n') : '';
+    return `${header}\n${body}`.trimEnd();
+  };
+  const safeState = {
+    whitelist: Array.isArray(state.whitelist) ? state.whitelist : [],
+    blacklist: Array.isArray(state.blacklist) ? state.blacklist : []
+  };
+  return `${buildSection('whitelist', safeState.whitelist)}\n\n${buildSection('blacklist', safeState.blacklist)}\n`;
+}
+
+export function buildJsonExport(state = { whitelist: [], blacklist: [] }) {
+  const safeState = {
+    whitelist: Array.isArray(state.whitelist) ? state.whitelist : [],
+    blacklist: Array.isArray(state.blacklist) ? state.blacklist : []
+  };
+  return JSON.stringify(safeState, null, 2);
+}
+
 // Run script after DOM is fully loaded
 document.addEventListener("DOMContentLoaded", async () => {
   
@@ -351,51 +409,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await addSiteToList('blacklist', site);
   };
 
-  // Parse JSON whitelist/blacklist payloads
-  function parseJsonLists(text) {
-    const obj = JSON.parse(text);
-    return {
-      whitelist: Array.isArray(obj.whitelist) ? obj.whitelist : [],
-      blacklist: Array.isArray(obj.blacklist) ? obj.blacklist : []
-    };
-  }
-
-  // Parse newline-based TXT payloads (supports optional [list] headers)
-  function parseTxtLists(text) {
-    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line && !line.startsWith('#'));
-    const lists = { whitelist: [], blacklist: [] };
-    let current = 'whitelist';
-    lines.forEach(line => {
-      const section = line.match(/^\[(whitelist|blacklist)\]$/i);
-      if (section) {
-        current = section[1].toLowerCase();
-        return;
-      }
-      const inline = line.match(/^(whitelist|blacklist)\s*[:|-]\s*(.+)$/i);
-      if (inline) {
-        lists[inline[1].toLowerCase()].push(inline[2].trim());
-        return;
-      }
-      lists[current].push(line);
-    });
-    return lists;
-  }
-
-  function mergeLists(state, additions) {
-    state.whitelist = Array.from(new Set([...(additions.whitelist || []), ...(state.whitelist || [])]));
-    state.blacklist = Array.from(new Set([...(additions.blacklist || []), ...(state.blacklist || [])]));
-    return state;
-  }
-
-  function buildTxtExport(state) {
-    const buildSection = (title, entries) => {
-      const header = `[${title}]`;
-      const body = (entries && entries.length) ? entries.join('\n') : '';
-      return `${header}\n${body}`.trimEnd();
-    };
-    return `${buildSection('whitelist', state.whitelist)}\n\n${buildSection('blacklist', state.blacklist)}\n`;
-  }
-
   function triggerDownload(content, fileName, type) {
     const blob = new Blob([content], { type });
     const url = URL.createObjectURL(blob);
@@ -443,7 +456,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Export list to JSON file
   exportBtn.onclick = async () => {
     const state = (await fetchState()) || { whitelist: [], blacklist: [] };
-    triggerDownload(JSON.stringify({ whitelist: state.whitelist, blacklist: state.blacklist }, null, 2), 'csp_lists.json', 'application/json');
+    triggerDownload(buildJsonExport(state), 'csp_lists.json', 'application/json');
   };
 
   // Export list to TXT file
