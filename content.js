@@ -10,31 +10,80 @@ function sendMessage(msg) {
 }
 
 // ---------------- Banner Handling ----------------
-// Find cookie/consent banners within the current document (and any accessible iframes).
-function findBanners(root = document) {
-  let banners = [];
+const BANNER_KEYWORDS = ['cookie', 'consent', 'gdpr', 'cmp'];
+
+const handledBanners = new WeakSet();
+let bannerLoggedThisPage = false;
+
+// Find cookie/consent banners within the current document (and any accessible iframes/shadow roots).
+function findBanners(root = document, seen = new Set()) {
+  if (!root || seen.has(root)) return [];
+  seen.add(root);
+
   const selectors = [
     '[id*="cookie"]', '[class*="cookie"]',
     '[id*="consent"]', '[class*="consent"]',
     '[id*="gdpr"]', '[class*="gdpr"]',
     '[id*="consent-banner"]', '[class*="consent-banner"]',
-    '.cc-window', '.cc-banner', '.cookie-banner', '.cookie-consent', '.qc-cmp2-container'
+    '.cc-window', '.cc-banner', '.cookie-banner', '.cookie-consent', '.qc-cmp2-container',
+    '[aria-label*="cookie"]', '[aria-describedby*="cookie"]',
+    '#onetrust-consent-sdk', '[class*="onetrust"]', '[id*="onetrust"]',
+    '[class*="sp_message_container"]', '[id*="sp_message_container"]',
+    '[data-testid*="cookie"]'
   ];
-  banners.push(...root.querySelectorAll(selectors.join(',')));
 
+  const banners = new Set(Array.from(root.querySelectorAll(selectors.join(','))));
+
+  // Heuristic: elements containing cookie/consent keywords and action buttons.
+  const candidates = root.querySelectorAll('div,section,aside,footer,dialog,form');
+  for (const el of candidates) {
+    const text = (el.innerText || '').toLowerCase();
+    if (!text) continue;
+    if (!BANNER_KEYWORDS.some(k => text.includes(k))) continue;
+    if (el.querySelector('button,a,[role="button"],input[type="button"],input[type="submit"]')) {
+      banners.add(el);
+    }
+  }
+
+  // Scan same-origin iframes
   for (const frame of root.querySelectorAll('iframe')) {
     try {
-      // Recursively scan iframe documents when same-origin access is allowed.
-      if (frame.contentDocument) banners.push(...findBanners(frame.contentDocument));
+      if (frame.contentDocument) findBanners(frame.contentDocument, seen).forEach(b => banners.add(b));
     } catch(e){}
   }
-  return banners;
+
+  // Scan shadow roots
+  for (const el of root.querySelectorAll('*')) {
+    if (el.shadowRoot) findBanners(el.shadowRoot, seen).forEach(b => banners.add(b));
+  }
+
+  return Array.from(banners);
+}
+
+// Remove nested/duplicate matches so we only act on the top-most banner container.
+function dedupeBanners(banners) {
+  return banners.filter(b => !banners.some(other => other !== b && other.contains(b)));
+}
+
+// Determine if an element looks like an overlay/popup banner.
+function isOverlay(el) {
+  try {
+    const cs = getComputedStyle(el);
+    const position = cs.position;
+    const highZ = parseInt(cs.zIndex, 10);
+    const positioned = position === 'fixed' || position === 'sticky';
+    const hasHighZ = !Number.isNaN(highZ) && highZ >= 50;
+    return positioned || hasHighZ;
+  } catch (_) {
+    return false;
+  }
 }
 
 // Attempt to click deny/essential-only actions on a banner and remove it if successful
 function interactWithBanner(banner) {
-  const denyTexts = ['reject', 'reject all', 'decline', 'decline all', 'deny', 'deny all', 'reject all cookies'];
-  const essentialsTexts = ['accept necessary', 'necessary only', 'only necessary', 'accept essential', 'do not sell or share my personal information', 'essential only', 'only essential'];
+  const denyTexts = ['reject', 'reject all', 'decline', 'decline all', 'deny', 'deny all', 'reject all cookies', 'continue without accepting', 'continue without agreeing', 'refuse'];
+  const essentialsTexts = ['accept necessary', 'necessary only', 'only necessary', 'accept essential', 'do not sell or share my personal information', 'essential only', 'only essential', 'strictly necessary', 'only required'];
+  const saveTexts = ['save choices', 'save preferences', 'confirm choices', 'confirm my choices', 'submit preferences', 'save settings', 'save and exit'];
 
   const interactiveEls = Array.from(banner.querySelectorAll(
     'button,a,input[type="button"],input[type="submit"],[role="button"],input[type="checkbox"],input[type="radio"]'
@@ -69,8 +118,28 @@ function interactWithBanner(banner) {
     }
   }
 
+  if (!clicked) {
+    // Apply toggles then try to save/confirm settings, which often respects the unchecked state
+    for (const el of interactiveEls) {
+      const txt = (el.innerText || el.value || el.getAttribute('aria-label') || '').trim().toLowerCase();
+      if (saveTexts.some(s => txt.includes(s))) {
+        try { el.click(); clicked = true; console.log("[CSP] clicked save/confirm:", txt); } catch(e){}
+        break;
+      }
+    }
+  }
+
   if (clicked) {
     try { banner.remove(); } catch(e){}
+    return true;
+  }
+
+  // Last resort: hide banner if it clearly references cookies/consent to avoid blocking the page
+  const text = (banner.innerText || '').toLowerCase();
+  if (isOverlay(banner) && BANNER_KEYWORDS.some(k => text.includes(k))) {
+    banner.style.setProperty('display', 'none', 'important');
+    banner.style.setProperty('visibility', 'hidden', 'important');
+    banner.style.setProperty('opacity', '0', 'important');
     return true;
   }
   return false;
@@ -78,13 +147,22 @@ function interactWithBanner(banner) {
 
 // Scan for banners and report how many were dismissed.
 async function handleBanners() {
-  const banners = findBanners();
+  const banners = dedupeBanners(findBanners());
   if (!banners || banners.length === 0) return 0;
 
   let removedCount = 0;
-  for (const b of banners) if (interactWithBanner(b)) removedCount++;
+  for (const b of banners) {
+    if (handledBanners.has(b)) continue;
+    if (interactWithBanner(b)) {
+      handledBanners.add(b);
+      removedCount++;
+    }
+  }
 
-  if (removedCount > 0) await sendMessage({ type: "LOG_BANNER_REMOVED", count: removedCount });
+  if (removedCount > 0 && !bannerLoggedThisPage) {
+    bannerLoggedThisPage = true;
+    await sendMessage({ type: "LOG_BANNER_REMOVED", count: 1 });
+  }
   return removedCount;
 }
 
