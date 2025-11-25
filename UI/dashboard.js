@@ -193,22 +193,56 @@ document.addEventListener("DOMContentLoaded", async () => {
       .sort((a, b) => b.total - a.total);
   }
 
+  // Aggregate cookie names across domains to find the noisiest offenders
+  function buildAggressiveCookies(allowedCookies = {}, blockedCookies = {}, limit = 6) {
+    const cookieMap = new Map();
+
+    const appendCookies = (bucket, key) => {
+      Object.values(bucket || {}).forEach(cookies => {
+        Object.entries(cookies || {}).forEach(([name, count]) => {
+          if (!cookieMap.has(name)) cookieMap.set(name, { name, blocked: 0, allowed: 0, total: 0 });
+          const entry = cookieMap.get(name);
+          entry[key] += count;
+        });
+      });
+    };
+
+    appendCookies(blockedCookies, 'blocked');
+    appendCookies(allowedCookies, 'allowed');
+
+    const aggressive = Array.from(cookieMap.values())
+      .map(entry => ({ ...entry, total: entry.blocked + entry.allowed }))
+      .filter(entry => entry.total > 0)
+      .sort((a, b) => b.blocked - a.blocked || b.total - a.total || a.name.localeCompare(b.name));
+
+    return aggressive.slice(0, limit);
+  }
+
   // Render both pies in the cookies overview section
-  function renderCookiePies(domains) {
-    const themePiePalette = ['#1fc9a4', '#ff6b8c', '#8c6bff', '#33f3c1', '#ffb76b'];
+  function renderCookiePies(domains, allowedCookies, blockedCookies) {
+    const themePiePalette = ['#1fc9a4', '#ff6b8c', '#8c6bff', '#33f3c1', '#ffb76b', '#ffda6b'];
+    const topPalette = ['#8c6bff', '#33f3c1', '#ff6b8c', '#1fc9a4', '#ffb76b'];
 
-    const overallData = [
-      { label: 'Allowed', value: domains.reduce((sum, d) => sum + d.allowed, 0), color: themePiePalette[0] },
-      { label: 'Blocked', value: domains.reduce((sum, d) => sum + d.blocked, 0), color: themePiePalette[1] }
-    ];
+    const aggressiveCookies = buildAggressiveCookies(allowedCookies, blockedCookies);
+    const aggressiveData = aggressiveCookies.map((cookie, idx) => ({
+      label: cookie.name,
+      value: cookie.blocked || cookie.total, // prefer blocked signal, fall back to total
+      color: themePiePalette[idx % themePiePalette.length],
+      blocked: cookie.blocked,
+      allowed: cookie.allowed,
+      total: cookie.total
+    }));
 
-    renderPie('#cookiePieOverall', overallData, {
+    renderPie('#cookiePieAggressive', aggressiveData, {
       legend: true,
       labelText: (_d, pct) => `${pct}%`,
-      labelFill: '#f5f7ff'
+      labelFill: '#f5f7ff',
+      tooltipFormatter: (d, pct) => {
+        const datum = d.data;
+        return `<strong>${datum.label}</strong><br/>Share: ${pct}%<br/>Blocked: ${datum.blocked || 0}<br/>Allowed: ${datum.allowed || 0}<br/>Total: ${datum.total || datum.value}`;
+      }
     });
 
-    const topPalette = ['#8c6bff', '#33f3c1', '#ff6b8c', '#1fc9a4', '#ffb76b'];
     const topDomains = domains
       .filter(d => d.total > 0)
       .slice(0, 5)
@@ -346,7 +380,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Update visualization
       visualization.updateChart(state);
-      renderCookiePies(domainCounts);
+      renderCookiePies(domainCounts, allowedCookies, blockedCookies);
     }
   
     if (state) {
