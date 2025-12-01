@@ -3,17 +3,6 @@
 // ---- Dynamic Rule ID seed ----
 let nextRuleId = 1000; // dynamic starting ID
 
-// ---- Cookie classification lists ----
-const essentialKeywords = [
-  'csrf', 'xsrf', 'session', 'auth', 'user_id', 'lang', 'theme', 'secure',
-  'prefs', 'sessid', 'ssid', 'user', 'login', 'zipcode', 'country', 'currency', 'sid', 'uid', 'remember', 'verify'
-];
-
-const nonEssentialTrackingCookies = [
-  '_ga', '_gid', '_fbp', '_gcl_au', '_ym_uid', '_gaexp', '_fbp', 'ga', 'track',
-  'trk', 'ads', 'adid', 'adtrack', 'pixel', 'tag'
-];
-
 // ---- Load tracker domains from file (async, works in extension & Node test) ----
 // This file is from a public tracker list (pgl.yoyo.org) and can be updated as needed.
 let _trackerDomainsLoaded = false;
@@ -82,56 +71,6 @@ const hardcodedTrackerDomains = [
 // ---- Combined tracker domains ----
 // Start with hardcoded list; additional domains from the packaged text file are loaded asynchronously
 export let TRACKER_DOMAINS = Array.from(new Set(hardcodedTrackerDomains)); // Remove duplicates
-
-// ---- Cookie essential check ----
-export function isEssential(cookie) {
-  return new Promise((resolve) => {
-    // 1) Obvious trackers by name -> non-essential
-    const name = (cookie?.name || '').toLowerCase();
-    const isTrackingCookie = nonEssentialTrackingCookies.some(trk => name.includes(trk));
-    if (isTrackingCookie) return resolve(false);
-
-    // 2) Keywords that typically indicate auth/session -> essential
-    const isEssentialByName = essentialKeywords.some(kw => name.includes(kw));
-    if (isEssentialByName) return resolve(true);
-
-    // 3) If chrome.tabs is unavailable (e.g., unit tests), fall back to conservative logic
-    if (!(globalThis.chrome?.tabs?.query)) {
-      // Prefer secure, session-like, httpOnly/hostOnly as essential heuristics
-      if (cookie?.secure && cookie?.hostOnly && cookie?.httpOnly) return resolve(true);
-      if (cookie?.secure && cookie?.httpOnly) return resolve(true);
-      if (cookie?.hostOnly && (cookie?.sameSite === 'Strict' || cookie?.sameSite === 'Lax')) return resolve(true);
-      if (cookie?.httpOnly && cookie?.hostOnly) return resolve(true);
-      if (!cookie?.expirationDate) return resolve(true); // session cookie
-      return resolve(false);
-    }
-
-    // 4) Browser-context checks (cross-site etc.)
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const currentTab = tabs?.[0];
-      let isCrossSite = false;
-
-      try {
-        const currentOrigin = currentTab?.url ? new URL(currentTab.url).origin : '';
-        // very rough domain-origin compare; if cookie.domain does not include origin host → treat as cross-site
-        isCrossSite = !!(cookie?.domain && currentOrigin && !cookie.domain.includes(new URL(currentOrigin).hostname));
-      } catch {
-        // If URL parsing fails, don’t classify as cross-site solely on error
-        isCrossSite = false;
-      }
-
-      if (isCrossSite) return resolve(false);
-
-      if (cookie?.secure && cookie?.hostOnly && cookie?.httpOnly) return resolve(true);
-      if (cookie?.secure && cookie?.httpOnly) return resolve(true);
-      if ((cookie?.hostOnly || cookie?.secure || cookie?.httpOnly) && (cookie?.sameSite === 'Strict' || cookie?.sameSite === 'Lax')) return resolve(true);
-      if (cookie?.httpOnly && cookie?.hostOnly) return resolve(true);
-      if (!cookie?.expirationDate) return resolve(true); // session cookie
-
-      return resolve(false);
-    });
-  });
-}
 
 // ---- DNR rule factory ----
 export function createBlockRule(domain) {
