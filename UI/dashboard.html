@@ -41,17 +41,6 @@
       <h2>Protection Controls</h2>
       <p class="section-subtitle">Adjust the global switches that determine how cookies are handled across every site.</p>
       <div class="toggle-grid">
-        <!-- Auto-Blocking Toggle -->
-        <div class="toggle-card">
-          <div class="toggle-text">
-            <span class="toggle-title">Auto-Blocking</span>
-            <span class="toggle-help">Automatically remove non-essential cookies while you browse.</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="autoBlockToggle">
-            <span class="slider round"></span>
-          </label>
-        </div>
         <!-- Blocker Active Toggle -->
         <div class="toggle-card">
           <div class="toggle-text">
@@ -63,6 +52,49 @@
             <span class="slider round"></span>
           </label>
         </div>
+        <!-- Auto-Blocking Toggle -->
+        <div class="toggle-card">
+          <div class="toggle-text">
+            <span class="toggle-title">Cookie Auto-Blocking</span>
+            <span class="toggle-help">Automatically remove non-essential cookies while you browse.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="autoBlockToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <!-- Banner AutoBlocking Toggle -->  
+          <div class="toggle-card">
+          <div class="toggle-text">
+            <span class="toggle-title">Banner Auto-Blocking</span>
+            <span class="toggle-help">Automatically remove Banners while you browse.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="autoBannerToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+       <!-- Aggressiveness slider -->
+      <div class="toggle-card">
+        <div class="toggle-text">
+          <span class="toggle-title">Cookie Blocker Aggressiveness</span>
+          <span class="toggle-help">Determines the level of aggression of the cookie blocker.</span>
+        </div>
+        <div class="aggressiveness-slider">
+          <div class="slider-labels">
+            <span>Less</span>
+            <span>Standard</span>
+            <span>More</span>
+          </div>
+          <input type="range" id="aggressivenessSlider" min="0" max="2" step="1" value="1">
+          <div class="slider-ticks">
+            <span class="tick"></span>
+            <span class="tick"></span>
+            <span class="tick"></span>
+          </div>
+        </div>
+      </div>
       </div>
     </section>
 
