@@ -1040,3 +1040,66 @@ body.light-theme .pie-tooltip {
   color: #0b1120;
   border-color: rgba(148, 163, 184, 0.8);
 }
+
+/* === BEAUTIFUL LIGHT MODE CHART COLORS === */
+body.light-theme {
+  /* Override the gradients defined in <defs> */
+  --chart-total-color: #4f46e5;
+  --chart-blocked-color: #dc2626;
+  --chart-total-fill-opacity: 0.18;
+  --chart-blocked-fill-opacity: 0.22;
+}
+
+/* Update gradient stops when in light mode */
+body.light-theme #areaTotalGradient stop {
+  stop-color: var(--chart-total-color);
+}
+body.light-theme #areaTotalGradient stop:first-child {
+  stop-opacity: var(--chart-total-fill-opacity);
+}
+body.light-theme #areaTotalGradient stop:last-child {
+  stop-opacity: 0;
+}
+
+body.light-theme #areaBlockedGradient stop {
+  stop-color: var(--chart-blocked-color);
+}
+body.light-theme #areaBlockedGradient stop:first-child {
+  stop-opacity: var(--chart-blocked-fill-opacity);
+}
+body.light-theme #areaBlockedGradient stop:last-child {
+  stop-opacity: 0;
+}
+
+/* Line colors + glow */
+body.light-theme path[stroke="#00E5FF"],
+body.light-theme path[d*="totalLine"] {
+  stroke: var(--chart-total-color) !important;
+}
+body.light-theme path[stroke="#FF8FB3"],
+body.light-theme path[d*="blockedLine"] {
+  stroke: var(--chart-blocked-color) !important;
+}
+
+/* Glow filter – make it indigo instead of cyan */
+body.light-theme #lineGlow feGaussianBlur {
+  stdDeviation: 3;
+}
+body.light-theme #lineGlow feMergeNode[in="coloredBlur"] {
+  in: SourceGraphic; /* keeps original color */
+}
+
+/* Dots on hover */
+body.light-theme .wave-point {
+  stroke: var(--chart-total-color);
+  fill: white;
+}
+body.light-theme .wave-point:hover,
+body.light-theme .wave-point[style*="opacity: 1"] {
+  fill: var(--chart-total-color);
+}
+
+/* X-axis labels – slightly darker for readability */
+body.light-theme .wave-x-labels text {
+  fill: #1e293b !important;
+}
