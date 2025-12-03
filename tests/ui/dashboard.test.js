@@ -54,6 +54,20 @@ describe('Dashboard UI', () => {
           cb({ success: true, state });
           return;
         }
+        if (msg.type === 'WHITELIST_SITE') {
+          if (msg.domain && !state.whitelist.includes(msg.domain)) {
+            state = { ...state, whitelist: [...state.whitelist, msg.domain] };
+          }
+          cb({ success: true, state });
+          return;
+        }
+        if (msg.type === 'BLOCK_SITE') {
+          if (msg.domain && !state.blacklist.includes(msg.domain)) {
+            state = { ...state, blacklist: [...state.blacklist, msg.domain] };
+          }
+          cb({ success: true, state });
+          return;
+        }
         if (msg.type === 'UPDATE_STATE') {
           if (msg.state && typeof msg.state === 'object') {
             state = { ...state, ...msg.state };
