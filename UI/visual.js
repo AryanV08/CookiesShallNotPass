@@ -106,6 +106,7 @@ if (typeof window !== "undefined" && window.__TEST__) {
       show(html, event, d, i) {
         tooltip.html(html);
 
+        // Access the current scales from the window object
         const pointX = (window.currentXScale?.(i) ?? 0) + margin.left + container.getBoundingClientRect().left;
         const pointY = (window.currentYScale?.(d.total) ?? 0) + margin.top + container.getBoundingClientRect().top;
 
@@ -247,8 +248,13 @@ if (typeof window !== "undefined" && window.__TEST__) {
     container = document.querySelector(".visualization-container");
     if (!container) return { updateChart: () => {} };
 
+    // Ensure the chart container allows horizontal scrolling
     const chartRoot = document.querySelector("#chart") || (container.appendChild(document.createElement("div")), document.querySelector("#chart"));
     chartRoot.id = "chart";
+    // Add CSS rule for scrolling (assuming this code runs in a context where it can manipulate styles or this rule is pre-applied)
+    chartRoot.style.overflowX = 'auto'; 
+    chartRoot.style.overflowY = 'hidden';
+    chartRoot.style.maxWidth = '100%';
 
     const tooltip = createTooltip();
     margin = { top: 40, right: 40, bottom: 120, left: 40 };
@@ -260,13 +266,22 @@ if (typeof window !== "undefined" && window.__TEST__) {
       const model = computeDomainModel(lastState);
       const data = applyFilterAndSort(model, lastState);
 
+      const domainCount = data.length;
+      // Define minimum pixel width for each data point to enforce spacing
+      const minSpacePerDomain = 60; 
+      
       const containerWidth = container.clientWidth || 640;
-      const width = Math.max(containerWidth - margin.left - margin.right, 260);
+      const innerContainerWidth = containerWidth - margin.left - margin.right;
+      
+      // Calculate the required width based on data count, ensuring it's at least the container's inner width
+      const requiredWidth = domainCount * minSpacePerDomain;
+      const width = Math.max(innerContainerWidth, requiredWidth); 
+      
       const height = Math.max(400, 160);
 
       d3.select(chartRoot).select("svg").remove();
       const svg = d3.select(chartRoot).append("svg")
-        .attr("width", width + margin.left + margin.right)
+        .attr("width", width + margin.left + margin.right) // SVG width now equals the larger 'width'
         .attr("height", height + margin.top + margin.bottom);
 
       addNeonDefs(svg);
@@ -276,12 +291,13 @@ if (typeof window !== "undefined" && window.__TEST__) {
       // -- Background --
       g.append("rect")
         .attr("x", -20).attr("y", -20)
-        .attr("width", width + 40).attr("height", height + 40)
+        .attr("width", width + 40).attr("height", height + 40) // Background covers the new width
         .attr("fill", "url(#chartBgGradient)")
         .attr("rx", 12);
 
       if (!data.length) {
-        g.append("text").attr("x", width/2).attr("y", height/2)
+        // Center text on the visible part of the chart
+        g.append("text").attr("x", innerContainerWidth/2).attr("y", height/2) 
           .attr("text-anchor", "middle").attr("fill", "#a3afd6")
           .style("font-size", "14px")
           .text("No cookie data yet. Start browsing to see activity.");
@@ -289,13 +305,14 @@ if (typeof window !== "undefined" && window.__TEST__) {
       }
 
       const maxTotal = d3.max(data, d => d.total) || 1;
-      const xIndex = d3.scaleLinear().domain([0, Math.max(data.length - 1, 1)]).range([0, width]);
+      // X-scale maps indices (0 to N-1) across the new, potentially wider, 'width'
+      const xIndex = d3.scaleLinear().domain([0, Math.max(domainCount - 1, 1)]).range([0, width]); 
       const y = d3.scaleLinear().domain([0, maxTotal * 1.1]).nice().range([height, 0]);
 
       window.currentXScale = xIndex;
       window.currentYScale = y;
 
-      // -- Curves --
+      // -- Curves (use the new wider xIndex) --
       const totalArea = d3.area().x((d,i) => xIndex(i)).y0(height).y1(d => y(d.total)).curve(d3.curveMonotoneX);
       const blockedArea = d3.area().x((d,i) => xIndex(i)).y0(height).y1(d => y(d.blocked)).curve(d3.curveMonotoneX);
       const totalLine = d3.line().x((d,i) => xIndex(i)).y(d => y(d.total)).curve(d3.curveMonotoneX);
@@ -306,7 +323,7 @@ if (typeof window !== "undefined" && window.__TEST__) {
         .selectAll("line")
         .data(y.ticks(5))
         .enter().append("line")
-        .attr("x1", 0).attr("x2", width)
+        .attr("x1", 0).attr("x2", width) // Grid lines extend across the new width
         .attr("y1", d => y(d)).attr("y2", d => y(d))
         .attr("stroke", "rgba(255,255,255,0.05)")
         .attr("stroke-dasharray", "4 4");
@@ -351,7 +368,7 @@ if (typeof window !== "undefined" && window.__TEST__) {
         .attr("transform", `translate(0, ${height + 15})`);
 
       // Determine how many pixels each data point has
-      const spacePerItem = width / Math.max(data.length, 1);
+      const spacePerItem = width / Math.max(domainCount, 1);
       
       // Only skip items if they are tighter than 11px
       const skipFactor = spacePerItem < 11 ? Math.ceil(11 / spacePerItem) : 1;
@@ -363,11 +380,10 @@ if (typeof window !== "undefined" && window.__TEST__) {
         
         // 1. Remove prefixes (www, api, etc)
         // 2. Remove TLD (split by dot and take the first part). 
-        //    Example: "www.google.com" -> "google", "amazon.co.uk" -> "amazon"
         let label = d.domain
           .replace(/^www\./, '')
           .replace(/^(ads|analytics|static|cdn|api|track|mobile|m)\./, '')
-          .split('.')[0]; // <-- This strips .com, .org, .net, etc.
+          .split('.')[0]; 
         
         // Capitalize first letter for nicer look
         label = label.charAt(0).toUpperCase() + label.slice(1);
@@ -403,9 +419,10 @@ if (typeof window !== "undefined" && window.__TEST__) {
       const overlay = g.selectAll(".hover-rect")
         .data(data).enter().append("rect")
         .attr("class", "hover-rect")
-        .attr("x", (d, i) => xIndex(i) - (width / data.length) / 2)
+        // Calculate the width of the hit area based on the new total width
+        .attr("x", (d, i) => xIndex(i) - (width / domainCount) / 2) 
         .attr("y", 0)
-        .attr("width", width / Math.max(data.length, 1))
+        .attr("width", width / Math.max(domainCount, 1))
         .attr("height", height)
         .attr("fill", "transparent");
 
@@ -433,7 +450,9 @@ if (typeof window !== "undefined" && window.__TEST__) {
         .on("click", (event, d) => openDomainPanel(d));
 
       // -- Legend --
-      const legend = g.append("g").attr("transform", `translate(${width - 10}, -15)`);
+      // Place the legend relative to the *visible* container width if possible, or right-align it on the wide chart.
+      const legendX = innerContainerWidth > width ? width - 10 : innerContainerWidth - 10;
+      const legend = g.append("g").attr("transform", `translate(${legendX}, -15)`);
       const addLegendItem = (color, text, yOffset) => {
         const grp = legend.append("g").attr("transform", `translate(0, ${yOffset})`);
         grp.append("rect").attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", color);

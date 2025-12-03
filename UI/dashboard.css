@@ -620,20 +620,22 @@ button.secondary:hover {
     grid-template-columns: 1fr 1fr;
   }
 }
+
 /* Visualization styles */
 .visualization-container {
   position: relative;
   width: 100%;
-  height: 600px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  border: 1px solid var(--soft-outline);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  min-width: 900px;  /* Ensure minimum width for better readability */
-  margin: 0 -20px;   /* Extend beyond the normal container */
-  padding: 0 20px;   /* Add padding to maintain alignment */
+  overflow: hidden; 
+  margin: 0 -18px;   
+  padding: 0 18px;   
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+/* **New** Chart Root to handle the actual scrolling */
+#chart {
+  overflow-x: auto; 
+  overflow-y: hidden;
+  max-width: 100%;
 }
 
 .visualization-container text {
@@ -673,24 +675,78 @@ button.secondary:hover {
   font-style: italic;
 }
 
-.visualization-container::-webkit-scrollbar {
-  width: 8px;
+/* Scrollbar styles for the #chart element (the div containing the SVG) */
+#chart::-webkit-scrollbar {
+  height: 8px;
 }
 
-.visualization-container::-webkit-scrollbar-track {
+#chart::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 4px;
 }
 
-.visualization-container::-webkit-scrollbar-thumb {
+#chart::-webkit-scrollbar-thumb {
   background: var(--accent);
   border-radius: 4px;
 }
 
-.visualization-container::-webkit-scrollbar-thumb:hover {
+#chart::-webkit-scrollbar-thumb:hover {
   background: var(--accent-alt);
 }
 
+/* **New** Styles for the chart controls (Search/Sort) */
+.viz-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--soft-outline);
+}
+
+.viz-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-sort-label {
+  margin-right: 6px;
+  color: #b8c0e0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  opacity: 0.9;
+}
+
+.viz-sort {
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.viz-sort.active {
+  background: var(--accent-soft);
+  color: var(--accent-alt);
+  border-color: var(--accent-alt);
+}
+
+.viz-sort:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.viz-search {
+  width: 200px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
 /* End visualization styles */
 
 /* Cookies overview charts */
@@ -771,6 +827,89 @@ button.secondary:hover {
   }
 }
 
+/* **New** Styles for the slide-out panel */
+.domain-slide-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 340px;
+  height: 100%;
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  border-left: 1px solid var(--panel-outline);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  transform: translateX(100%);
+  transition: transform 0.3s ease-out;
+  z-index: 10000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.domain-slide-panel.active {
+  transform: translateX(0);
+}
+
+.domain-slide-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.domain-slide-title {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: var(--accent);
+}
+
+.domain-slide-section {
+  margin-bottom: 25px;
+}
+
+.domain-slide-section h4 {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
+}
+
+.domain-cookie-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.domain-cookie-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.domain-cookie-list li:last-child {
+  border-bottom: none;
+}
+
+.domain-cookie-list li span:first-child {
+  word-break: break-word;
+  padding-right: 10px;
+  color: var(--text);
+}
+
+.domain-cookie-list li span:last-child {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--accent-alt);
+}
+/* End domain slide panel styles */
+
 /* Light theme overrides */
 body.light-theme {
   background: linear-gradient(135deg, #fdfbfb, #ebedee);
@@ -788,6 +927,8 @@ body.light-theme {
   --accent-alt: #0ea5e9;
   --accent-soft: rgba(79, 70, 229, 0.08);
   --danger: #b91c1c;
+  --shadow: 0 25px 50px rgba(189, 192, 203, 0.5); /* lighter shadow */
+  --glow: 0 0 15px rgba(79, 70, 229, 0.35); /* lighter glow */
 }
 
 /* Deeper red for "Cookies Blocked" number in light mode */
@@ -898,97 +1039,4 @@ body.light-theme .pie-tooltip {
   background: #ffffff;
   color: #0b1120;
   border-color: rgba(148, 163, 184, 0.8);
-}
-
-.viz-sort-label {
-  margin-right: 6px;
-  color: #b8c0e0;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.4px;
-  opacity: 0.9;
-}
-
-.aggressiveness-slider {
-  width: 200px;
-  margin-top: 8px;
-}
-
-.slider-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 12px;
-}
-
-/* Dark theme (default) */
-.slider-labels {
-  color: #cccccc;
-}
-
-#aggressivenessSlider {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  outline: none;
-  -webkit-appearance: none;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3); /* Visible border */
-}
-
-/* Track - Transparent with border */
-#aggressivenessSlider::-webkit-slider-track {
-  width: 100%;
-  height: 6px;
-  background: transparent; /* Fully transparent */
-  border-radius: 3px;
-  border: none;
-}
-
-#aggressivenessSlider::-moz-range-track {
-  width: 100%;
-  height: 6px;
-  background: transparent; /* Fully transparent */
-  border-radius: 3px;
-  border: none;
-}
-
-/* Thumb - Dark Theme */
-#aggressivenessSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #8c6bff;
-  cursor: pointer;
-  border: 2px solid #1a1a2a;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-#aggressivenessSlider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #8c6bff;
-  cursor: pointer;
-  border: 2px solid #1a1a2a;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Light Theme Styles */
-body.light-theme .slider-labels {
-  color: #666666;
-}
-
-body.light-theme #aggressivenessSlider {
-  border: 1px solid rgba(0, 0, 0, 0.3); /* Darker border for light theme */
-}
-
-/* Light theme thumb */
-body.light-theme #aggressivenessSlider::-webkit-slider-thumb {
-  border: 2px solid #f5f7ff;
-}
-
-body.light-theme #aggressivenessSlider::-moz-range-thumb {
-  border: 2px solid #f5f7ff;
 }
