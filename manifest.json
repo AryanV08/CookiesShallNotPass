@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "CookiesShallNotPass",
   "version": "1.0.0",
+  "key": "femnjflcajigiooimbmbniagbpnggoba",
   "description": "Blocks unwanted cookies, fully customizable",
   "permissions": [
     "cookies",
@@ -21,6 +22,11 @@
   "action": {
     "default_popup": "UI/popup.html",
     "default_icon": "icon.png"
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
   },
   "web_accessible_resources": [
     {
