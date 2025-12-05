@@ -33,6 +33,20 @@ export const Storage = {
     });
   },
 
+    async syncToCloud() {
+    // Grab everything from local storage
+    const localData = await new Promise(resolve => {
+      chrome.storage.local.get(null, resolve); // null => all keys
+    });
+
+    // Write everything to sync storage
+    await new Promise(resolve => {
+      chrome.storage.sync.set(localData, () => resolve(true));
+    });
+
+    return true;
+  },
+  
   // Helper function to perform the actual write logic (used by scheduleSync and forceSyncNow)
   async _performSyncWrite(currentState) {
     // Clear any pending scheduled sync, as we are running it now
