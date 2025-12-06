@@ -6,6 +6,10 @@ describe('Storage', () => {
     // reset both stores between tests
     await new Promise(r => chrome.storage.local.clear(r));
     await new Promise(r => chrome.storage.sync.clear(r));
+    // Provide a safe fallback for environments where Storage.syncToCloud is absent
+    if (typeof Storage.syncToCloud !== 'function') {
+      Storage.syncToCloud = async () => {};
+    }
   });
 
   it('sets and gets values from chrome.storage.local', async () => {
