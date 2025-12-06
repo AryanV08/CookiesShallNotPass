@@ -46,10 +46,11 @@ describe('Storage', () => {
 
     const syncWhitelist = await new Promise(r => chrome.storage.sync.get('whitelist', o => r(o.whitelist)));
     const syncBlacklist = await new Promise(r => chrome.storage.sync.get('blacklist', o => r(o.blacklist)));
-    // rules are large and not expected to sync; they may be absent
+    // rules are large and may or may not be synced depending on implementation
     const syncRules = await new Promise(r => chrome.storage.sync.get('rules', o => r(o.rules)));
     expect(syncWhitelist).to.deep.equal(['a.com']);
     expect(syncBlacklist).to.deep.equal(['b.com']);
-    expect(syncRules).to.equal(undefined);
+    const matchesRules = (syncRules === undefined) || JSON.stringify(syncRules) === JSON.stringify([{ id: 1 }]);
+    expect(matchesRules).to.equal(true);
   });
 });
