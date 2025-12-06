@@ -27,7 +27,7 @@ const essentialKeywords = {
   
   // MORE AGGRESSIVE: Strict definition - only core functionality (fewest essential cookies)
   more: [
-    'csrf', 'xsrf', 'session', 'auth', 'user_id', 'sessid', 'ssid', 'user', 
+    'csrf', 'xsrf', 'session', 'auth', 'user_id', 'sessid', 'ssid',
     'login', 'sid', 'uid', 'token', 'access_token', 'refresh_token', 'jwt',
     'oauth', 'cf_bm', 'cf_clearance', '__cf'
   ]
@@ -37,8 +37,8 @@ const essentialKeywords = {
 const nonEssentialTrackingCookies = {
   // LESS AGGRESSIVE: Only the most obvious trackers (fewest tracking cookies blocked)
   less: [
-    'ga', '_ga','_gid', '_gat', '_fbp', '_gcl_au', 'ga_', 'gtag',
-    'fb_x', 'fr_', 'trk_', 'ads_', 'adid', 'pixel'
+    'ga', '_ga','gid', '_gat', '_fbp', '_gcl_au', 'ga_', 'gtag',
+    'fb_x', 'fr_', 'trk_', 'ads', 'adid', 'pixel', 'unauth', 'track', 'trk', 'geo'
   ],
   
   // STANDARD AGGRESSIVE: Common analytics and advertising
@@ -46,7 +46,7 @@ const nonEssentialTrackingCookies = {
     'ga', '_ga', '_gid', '_gat', '_fbp', '_gcl_au', '_ym_uid', '_gaexp', 'ga', 
     'track', 'trk', 'ads', 'adid', 'adtrack', 'pixel', 'tag', '_utma', 
     '_utmb', '_utmc', '_utmz', '_utmv', '_hjid', 'amplitude_', 'mixpanel',
-    'intercom', 'hotjar', 'pardot', 'hubspot'
+    'intercom', 'hotjar', 'pardot', 'hubspot', 'unauth', 'track', 'trk', 'geo'
   ],
   
   // MORE AGGRESSIVE: Extended tracking detection (most tracking cookies blocked)
@@ -58,7 +58,8 @@ const nonEssentialTrackingCookies = {
     'livechat', 'zopim', 'tracking', 'analytics', 'marketing', 'campaign', 
     'conversion', 'retargeting', 'remarketing', 'advertising', 'personalization',
     'optimizely', 'segment', 'kenshoo', 'marin', 'kissmetrics', 'crazyegg',
-    'clicktale', 'luckyorange', 'inspectlet', 'mouseflow', 'sessioncam'
+    'clicktale', 'luckyorange', 'inspectlet', 'mouseflow', 'sessioncam', 'unauth', 'track', 'trk', 'geo'
+    
   ]
 };
 
