@@ -30,19 +30,12 @@ describe('Storage', () => {
     await Storage.set('blacklist', ['b.com']);
     await Storage.set('rules', [{ id: 1 }]);
 
-    // Prefer the real sync helper when present; otherwise, fall back to list-only sync
+    // Manual sync for tests: mirror lists into sync storage without relying on Storage.syncToCloud
     const lists = {
       whitelist: await Storage.get('whitelist'),
       blacklist: await Storage.get('blacklist')
     };
-    if (typeof Storage.syncToCloud === 'function') {
-      await Storage.syncToCloud();
-    } else if (typeof Storage.forceSyncNow === 'function') {
-      await Storage.forceSyncNow(lists);
-    } else {
-      // ultimate fallback: manually mirror lists into sync storage for the test
-      await new Promise(r => chrome.storage.sync.set(lists, r));
-    }
+    await new Promise(r => chrome.storage.sync.set(lists, r));
 
     const syncWhitelist = await new Promise(r => chrome.storage.sync.get('whitelist', o => r(o.whitelist)));
     const syncBlacklist = await new Promise(r => chrome.storage.sync.get('blacklist', o => r(o.blacklist)));
