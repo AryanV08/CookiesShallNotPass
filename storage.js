@@ -33,15 +33,17 @@ export const Storage = {
     });
   },
 
-    async syncToCloud() {
-    // Grab everything from local storage
-    const localData = await new Promise(resolve => {
-      chrome.storage.local.get(null, resolve); // null => all keys
+  async syncToCloud() {
+    // Only sync list keys to stay within sync quotas
+    const lists = await new Promise(resolve => {
+      chrome.storage.local.get(SYNCABLE_KEYS, resolve);
     });
 
-    // Write everything to sync storage
     await new Promise(resolve => {
-      chrome.storage.sync.set(localData, () => resolve(true));
+      chrome.storage.sync.set({
+        whitelist: lists.whitelist || [],
+        blacklist: lists.blacklist || []
+      }, () => resolve(true));
     });
 
     return true;

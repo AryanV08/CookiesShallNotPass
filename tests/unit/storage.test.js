@@ -27,14 +27,27 @@ describe('Storage', () => {
 
   it('syncs local data to chrome.storage.sync', async () => {
     await Storage.set('whitelist', ['a.com']);
+    await Storage.set('blacklist', ['b.com']);
     await Storage.set('rules', [{ id: 1 }]);
 
-    await Storage.syncToCloud();
+    if (typeof Storage.syncToCloud === 'function') {
+      await Storage.syncToCloud();
+    } else {
+      // Fallback path: trigger the list-only sync helper used in runtime
+      const currentState = {
+        whitelist: await Storage.get('whitelist'),
+        blacklist: await Storage.get('blacklist')
+      };
+      await Storage.forceSyncNow(currentState);
+    }
 
     const syncWhitelist = await new Promise(r => chrome.storage.sync.get('whitelist', o => r(o.whitelist)));
+    const syncBlacklist = await new Promise(r => chrome.storage.sync.get('blacklist', o => r(o.blacklist)));
+    // rules are no longer synced to avoid exceeding sync quotas
     const syncRules = await new Promise(r => chrome.storage.sync.get('rules', o => r(o.rules)));
-
+    // only lists should be synced
     expect(syncWhitelist).to.deep.equal(['a.com']);
-    expect(syncRules).to.deep.equal([{ id: 1 }]);
+    expect(syncBlacklist).to.deep.equal(['b.com']);
+    expect(syncRules).to.equal(undefined);
   });
 });
