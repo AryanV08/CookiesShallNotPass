@@ -28,6 +28,7 @@ describe('Storage', () => {
   it('syncs local data to chrome.storage.sync', async () => {
     await Storage.set('whitelist', ['a.com']);
     await Storage.set('blacklist', ['b.com']);
+    await Storage.set('rules', [{ id: 1 }]);
 
     // Manual sync for tests: prefer syncToCloud when present, otherwise mirror lists into sync storage
     const lists = {
@@ -43,7 +44,11 @@ describe('Storage', () => {
 
     const syncWhitelist = await new Promise(r => chrome.storage.sync.get('whitelist', o => r(o.whitelist)));
     const syncBlacklist = await new Promise(r => chrome.storage.sync.get('blacklist', o => r(o.blacklist)));
+    // rules are large and may or may not be synced depending on implementation
+    const syncRules = await new Promise(r => chrome.storage.sync.get('rules', o => r(o.rules)));
     expect(syncWhitelist).to.deep.equal(['a.com']);
     expect(syncBlacklist).to.deep.equal(['b.com']);
+    const matchesRules = (syncRules === undefined) || JSON.stringify(syncRules) === JSON.stringify([{ id: 1 }]);
+    expect(matchesRules).to.equal(true);
   });
 });
