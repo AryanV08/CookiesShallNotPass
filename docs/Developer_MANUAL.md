@@ -65,17 +65,55 @@ Tests are stored in the `tests/` directory (not shown in screenshot but required
 
 ## How to Build the Software
 
-CookiesShallNotPass is a Chrome extension built with **HTML, CSS, JavaScript**, and **Manifest V3**.  
-There is no compilation step — you simply install dependencies and load the project into Chrome.
+CookiesShallNotPass uses a simple front-end build system based on **HTML, CSS, JavaScript**, and Chrome’s **Manifest V3** framework. To build the software:
+
+1. **Clone the repository**  
+- Open a terminal or command prompt and run:  
+  ```
+  git clone https://github.com/AryanV08/CookiesShallNotPass.git
+  cd CookiesShallNotPass
+  ```
+
+2. **Find the folder you just cloned**  
+- Locate the `CookiesShallNotPass` folder on your machine.
+
+3. **Verify the project structure**  
+- Ensure the following files/folders are present:  
+  - `manifest.json`  
+  - `/UI`  
+  - `background.js`  
+  - `content.js`  
+  - `rulesEngine.js`  
+  - `storage.js`  
+  - `icon.png`
+
+4. **Create a release folder**  
+- Create a new folder on your desktop and name it `CookiesShallNotPass Extension`.  
+- Copy and paste the files/folders listed above into this new folder.
+
+5. **Install Node.js and dependencies**  
+- Install Node.js **20.x or above** from:  
+  https://nodejs.org/en/download  
+- In a terminal inside the cloned `CookiesShallNotPass` folder, run:  
+  ```
+  npm install
+  ```
+
+6. **Load the extension into Chrome for testing**  
+- Open Chrome → click the three dots in the top-right corner → **Settings**.  
+- In the left sidebar, click **Extensions**.  
+- Enable **Developer mode** in the top-right corner.  
+- Click **Load unpacked** in the top-left corner.  
+- Select the `CookiesShallNotPass Extension` folder you created on your desktop.  
+- Click the puzzle-piece icon in the top-right corner, then click the pin icon next to **CookiesShallNotPass** so it is easy to access.  
+- Confirm the cookie icon for the extension appears next to the puzzle-piece icon and that the toggle switch for the extension is enabled (green).
+
+7. **Run and verify components**  
+- Click the cookie icon to open the popup, then click **Go To Dashboard** and confirm the dashboard and settings load correctly.  
+- Modify preferences or import whitelist/blacklist files to confirm that the UI and backend are integrated and responding as expected.
 
 ---
 
-1. Open your terminal and run:
-   ```bash
-   git clone https://github.com/AryanV08/CookiesShallNotPass.git
-   cd CookiesShallNotPass
-   
----
 ### How to test the software
 To run the provided test suite, run:  
 - `npm i`  # same as 'npm install'
