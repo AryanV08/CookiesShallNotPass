@@ -6,10 +6,10 @@ if (typeof window !== "undefined" && window.__TEST__) {
 } else {
   // ================= Helpers =================
   function formatCookieFrequencies(cookies) {
-    if (!cookies) return "";
-    const entries = Object.entries(cookies);
-    if (entries.length === 0) return "<small>No cookies recorded yet.</small>";
-    return entries
+    if (!cookies || Object.keys(cookies).length === 0) {
+      return "<small>No cookies recorded yet.</small>";
+    }
+    return Object.entries(cookies)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 12)
       .map(([name, count]) => `• ${name}: ${count} time${count > 1 ? "s" : ""}`)
@@ -30,7 +30,6 @@ if (typeof window !== "undefined" && window.__TEST__) {
         allowedCookies: {}
       });
     }
-
     for (const [domain, cookies] of Object.entries(allowedMap)) {
       if (!map.has(domain)) {
         map.set(domain, {
@@ -48,7 +47,9 @@ if (typeof window !== "undefined" && window.__TEST__) {
     }
 
     const arr = Array.from(map.values());
-    arr.forEach(row => { row.total = row.blocked + row.allowed; });
+    arr.forEach(row => {
+      row.total = row.blocked + row.allowed;
+    });
     return arr;
   }
 
@@ -77,55 +78,43 @@ if (typeof window !== "undefined" && window.__TEST__) {
     return data;
   }
 
-  function createTooltip() {
-    d3.select("body").selectAll(".custom-tooltip").remove();
+  // ================= Tooltip (centered card, not following mouse) =================
+  function createTooltip(container) {
+    // Remove any existing tooltip
+    container.selectAll(".custom-tooltip").remove();
 
-    const tooltip = d3.select("body")
+    const styles = getComputedStyle(document.body);
+    const bg = (styles.getPropertyValue("--panel") || "rgba(10, 12, 30, 0.98)").trim();
+    const border = (styles.getPropertyValue("--panel-outline") || "rgba(140, 107, 255, 0.4)").trim();
+    const textColor = (styles.getPropertyValue("--text") || "#f0f4ff").trim();
+
+    const tooltip = container
       .append("div")
       .attr("class", "custom-tooltip")
-      .style("opacity", 0)
+      .style("position", "absolute")
+      .style("top", "50%")
+      .style("left", "50%")
+      .style("transform", "translate(-50%, -50%)")
       .style("pointer-events", "none")
-      .style("position", "fixed")
-      .style("padding", "12px 16px")
-      .style("background", "rgba(10, 12, 30, 0.85)") 
-      .style("backdrop-filter", "blur(12px)")
-      .style("border", "1px solid rgba(255, 255, 255, 0.1)")
-      .style("border-left", "3px solid #00E5FF") 
-      .style("border-radius", "8px")
-      .style("box-shadow", "0 16px 40px rgba(0, 0, 0, 0.6)")
-      .style("font-family", "'Inter', sans-serif")
+      .style("opacity", 0)
+      .style("padding", "16px 20px")
+      .style("background", bg)
+      .style("border", `1px solid ${border}`)
+      .style("border-radius", "14px")
+      .style("color", textColor)
       .style("font-size", "13px")
-      .style("color", "#f0f4ff")
-      .style("line-height", "1.5")
-      .style("min-width", "200px")
-      .style("max-width", "320px")
-      .style("z-index", "99999")
-      .style("transition", "opacity 0.15s ease, transform 0.1s ease");
+      .style("line-height", "1.55")
+      .style("max-width", "360px")
+      .style("box-shadow", "0 22px 55px rgba(0,0,0,0.75)")
+      .style("backdrop-filter", "blur(18px)")
+      .style("z-index", 1000);
 
     return {
-      show(html, event, d, i) {
-        tooltip.html(html);
-
-        // Access the current scales from the window object
-        const pointX = (window.currentXScale?.(i) ?? 0) + margin.left + container.getBoundingClientRect().left;
-        const pointY = (window.currentYScale?.(d.total) ?? 0) + margin.top + container.getBoundingClientRect().top;
-
-        let left = pointX + 20;
-        let top = pointY - 20;
-
-        if (left + 340 > window.innerWidth) left = pointX - 340 - 20;
-        if (top - 180 < 0) top = pointY + 30;
-
-        tooltip
-          .style("left", left + "px")
-          .style("top", top + "px")
-          .style("opacity", 1)
-          .style("transform", "translateY(0px)");
+      show(html /* event is ignored on purpose */) {
+        tooltip.html(html).style("opacity", 1);
       },
       hide() {
-        tooltip
-          .style("opacity", 0)
-          .style("transform", "translateY(4px)"); 
+        tooltip.style("opacity", 0);
       }
     };
   }
@@ -133,19 +122,59 @@ if (typeof window !== "undefined" && window.__TEST__) {
   function buildTooltipHtmlForDomain(domainObj) {
     const blockedFreq = formatCookieFrequencies(domainObj.blockedCookies);
     const allowedFreq = formatCookieFrequencies(domainObj.allowedCookies);
+
     return `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <strong style="color:#fff; font-size:15px; letter-spacing:0.5px;">${domainObj.domain}</strong>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.7;">
+          Cookies by Domain
+        </div>
+        <div style="font-size:17px; font-weight:600; margin-top:4px;">
+          ${domainObj.domain}
+        </div>
       </div>
-      <div style="background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:4px; margin-bottom:8px; display:flex; gap:12px;">
-        <span style="color:#00E5FF; font-weight:600;">Total: ${domainObj.total}</span>
-        <span style="color:#FF8FB3; font-size:12px; opacity:0.8;">(Blocked: ${domainObj.blocked})</span>
+
+      <div style="display:flex; gap:12px; margin-bottom:10px; font-size:13px;">
+        <div style="padding:6px 10px; border-radius:999px; background:rgba(37,99,235,0.12);">
+          <span style="opacity:0.8;">Total</span>
+          <span style="font-weight:600; margin-left:6px;">${domainObj.total}</span>
+        </div>
+        <div style="padding:6px 10px; border-radius:999px; background:rgba(225,29,72,0.12);">
+          <span style="opacity:0.8;">Blocked</span>
+          <span style="font-weight:600; margin-left:6px;">${domainObj.blocked}</span>
+        </div>
+        <div style="padding:6px 10px; border-radius:999px; background:rgba(16,185,129,0.12);">
+          <span style="opacity:0.8;">Allowed</span>
+          <span style="font-weight:600; margin-left:6px;">${domainObj.allowed}</span>
+        </div>
       </div>
-      ${blockedFreq ? `<div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.1); padding-top:6px;"><b style="color:#FF8FB3; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Blocked</b><br/>${blockedFreq}</div>` : ""}
-      ${allowedFreq ? `<div style="margin-top:6px; border-top:1px solid rgba(255,255,255,0.1); padding-top:6px;"><b style="color:#33f3c1; font-size:11px; text-transform:uppercase; letter-spacing:1px;">Allowed</b><br/>${allowedFreq}</div>` : ""}
+
+      ${
+        blockedFreq
+          ? `
+        <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.08); font-size:12px;">
+          <div style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.7; margin-bottom:4px;">
+            Blocked cookies
+          </div>
+          ${blockedFreq}
+        </div>`
+          : ""
+      }
+
+      ${
+        allowedFreq
+          ? `
+        <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); font-size:12px;">
+          <div style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; opacity:0.7; margin-bottom:4px;">
+            Allowed cookies
+          </div>
+          ${allowedFreq}
+        </div>`
+          : ""
+      }
     `;
   }
 
+  // ================= Domain Detail Panel =================
   function openDomainPanel(domainObj) {
     let panel = document.querySelector(".domain-slide-panel");
     if (!panel) {
@@ -159,46 +188,69 @@ if (typeof window !== "undefined" && window.__TEST__) {
         </div>
       `;
       document.body.appendChild(panel);
-      panel.querySelector(".domain-slide-close").addEventListener("click", () => {
-        panel.classList.remove("active");
-      });
+      panel
+        .querySelector(".domain-slide-close")
+        .addEventListener("click", () => panel.classList.remove("active"));
     }
+
     panel.querySelector(".domain-slide-title").textContent = domainObj.domain;
     const body = panel.querySelector(".domain-slide-body");
-    const renderList = (cookies) => {
-      if (!cookies || Object.keys(cookies).length === 0) return `<p class="empty-preview">None recorded.</p>`;
-      return `<ul class="domain-cookie-list">${Object.entries(cookies)
-        .sort(([,a],[,b]) => b - a)
-        .slice(0, 40)
-        .map(([n,c]) => `<li><span>${n}</span><span>${c}</span></li>`).join("")}</ul>`;
+
+    const renderList = cookies => {
+      if (!cookies || Object.keys(cookies).length === 0) {
+        return `<p class="empty-preview">None recorded.</p>`;
+      }
+      return `
+        <ul class="domain-cookie-list">
+          ${Object.entries(cookies)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 50)
+            .map(
+              ([name, count]) =>
+                `<li><span>${name}</span><span>${count}</span></li>`
+            )
+            .join("")}
+        </ul>`;
     };
+
     body.innerHTML = `
-      <div class="domain-slide-section"><h4>Blocked cookies (${domainObj.blocked})</h4>${renderList(domainObj.blockedCookies)}</div>
-      <div class="domain-slide-section"><h4>Allowed cookies (${domainObj.allowed})</h4>${renderList(domainObj.allowedCookies)}</div>
+      <div class="domain-slide-section">
+        <h4>Blocked cookies (${domainObj.blocked})</h4>
+        ${renderList(domainObj.blockedCookies)}
+      </div>
+      <div class="domain-slide-section">
+        <h4>Allowed cookies (${domainObj.allowed})</h4>
+        ${renderList(domainObj.allowedCookies)}
+      </div>
     `;
+
     requestAnimationFrame(() => panel.classList.add("active"));
   }
 
+  // ================= Controls =================
   function createControls(container) {
     let host = container.querySelector(".viz-controls");
     if (!host) {
       host = document.createElement("div");
       host.className = "viz-controls";
+      host.innerHTML = `
+        <div class="viz-controls-left">
+          <input type="text" class="viz-search" placeholder="Search domains…" aria-label="Search domains"/>
+        </div>
+        <div class="viz-controls-right">
+          <span class="viz-sort-label">Sort by:</span>
+          <button type="button" data-sort="total" class="viz-sort active">Trend</button>
+          <button type="button" data-sort="blocked" class="viz-sort">Blocked</button>
+          <button type="button" data-sort="allowed" class="viz-sort">Allowed</button>
+          <button type="button" data-sort="az" class="viz-sort">A–Z</button>
+        </div>
+      `;
       container.prepend(host);
     }
-    host.innerHTML = `
-      <div class="viz-controls-left">
-        <input type="text" class="viz-search" placeholder="Search domains…" aria-label="Search domains"/>
-      </div>
-      <div class="viz-controls-right">
-        <span class="viz-sort-label">Sort by:</span>
-        <button type="button" data-sort="total" class="viz-sort active">Trend</button>
-        <button type="button" data-sort="blocked" class="viz-sort">Blocked</button>
-        <button type="button" data-sort="allowed" class="viz-sort">Allowed</button>
-        <button type="button" data-sort="az" class="viz-sort">A–Z</button>
-      </div>
-    `;
-    let sortHandler = () => {}, searchHandler = () => {};
+
+    let sortHandler = () => {};
+    let searchHandler = () => {};
+
     host.querySelectorAll(".viz-sort").forEach(btn => {
       btn.addEventListener("click", () => {
         host.querySelectorAll(".viz-sort").forEach(b => b.classList.remove("active"));
@@ -206,282 +258,389 @@ if (typeof window !== "undefined" && window.__TEST__) {
         sortHandler(btn.dataset.sort);
       });
     });
+
     const searchInput = host.querySelector(".viz-search");
-    if (searchInput) searchInput.addEventListener("input", () => searchHandler(searchInput.value || ""));
-    return { setSortHandler: fn => sortHandler = fn, setSearchHandler: fn => searchHandler = fn };
+    searchInput.addEventListener("input", () => {
+      searchHandler(searchInput.value.trim());
+    });
+
+    return {
+      setSortHandler: fn => {
+        sortHandler = fn;
+      },
+      setSearchHandler: fn => {
+        searchHandler = fn;
+      }
+    };
   }
 
-  function addNeonDefs(svg) {
+  // ================= Neon Gradients & Filters (theme-aware) =================
+  function addNeonDefs(svg, totalLineColor, blockedLineColor) {
     const defs = svg.append("defs");
 
-    const totalAreaGrad = defs.append("linearGradient")
+    // Gradients for areas
+    const totalGradient = defs
+      .append("linearGradient")
       .attr("id", "areaTotalGradient")
-      .attr("x1", "0%").attr("y1", "0%")
-      .attr("x2", "0%").attr("y2", "100%");
-    
-    totalAreaGrad.append("stop").attr("offset", "0%").attr("stop-color", "#00E5FF").attr("stop-opacity", 0.4);
-    totalAreaGrad.append("stop").attr("offset", "100%").attr("stop-color", "#00E5FF").attr("stop-opacity", 0.0);
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "0%")
+      .attr("y2", "100%");
+    totalGradient
+      .selectAll("stop")
+      .data([
+        { offset: "0%", color: totalLineColor, opacity: 0.35 },
+        { offset: "100%", color: totalLineColor, opacity: 0 }
+      ])
+      .enter()
+      .append("stop")
+      .attr("offset", d => d.offset)
+      .attr("stop-color", d => d.color)
+      .attr("stop-opacity", d => d.opacity);
 
-    const blockedAreaGrad = defs.append("linearGradient")
+    const blockedGradient = defs
+      .append("linearGradient")
       .attr("id", "areaBlockedGradient")
-      .attr("x1", "0%").attr("y1", "0%")
-      .attr("x2", "0%").attr("y2", "100%");
-    
-    blockedAreaGrad.append("stop").attr("offset", "0%").attr("stop-color", "#FF8FB3").attr("stop-opacity", 0.5);
-    blockedAreaGrad.append("stop").attr("offset", "100%").attr("stop-color", "#FF8FB3").attr("stop-opacity", 0.0);
+      .attr("x1", "0%")
+      .attr("y1", "0%")
+      .attr("x2", "0%")
+      .attr("y2", "100%");
+    blockedGradient
+      .selectAll("stop")
+      .data([
+        { offset: "0%", color: blockedLineColor, opacity: 0.45 },
+        { offset: "100%", color: blockedLineColor, opacity: 0 }
+      ])
+      .enter()
+      .append("stop")
+      .attr("offset", d => d.offset)
+      .attr("stop-color", d => d.color)
+      .attr("stop-opacity", d => d.opacity);
 
+    // Glow filter for lines & dots
     const filter = defs.append("filter").attr("id", "lineGlow");
-    filter.append("feGaussianBlur").attr("stdDeviation", "2.5").attr("result", "coloredBlur");
+    filter.append("feGaussianBlur").attr("stdDeviation", "3").attr("result", "blur");
     const merge = filter.append("feMerge");
-    merge.append("feMergeNode").attr("in", "coloredBlur");
+    merge.append("feMergeNode").attr("in", "blur");
     merge.append("feMergeNode").attr("in", "SourceGraphic");
-    
-    const bgGrad = defs.append("linearGradient").attr("id","chartBgGradient").attr("x2","0%").attr("y2","100%");
-    bgGrad.append("stop").attr("offset", "0%").attr("stop-color", "rgba(20, 25, 50, 0.4)");
-    bgGrad.append("stop").attr("offset", "100%").attr("stop-color", "rgba(10, 12, 25, 0.1)");
   }
 
-  // ================= Main visualization =================
+  // ================= Main Visualization =================
   let container, margin;
 
   function initializeVisualization() {
     container = document.querySelector(".visualization-container");
     if (!container) return { updateChart: () => {} };
 
-    // Ensure the chart container allows horizontal scrolling
-    const chartRoot = document.querySelector("#chart") || (container.appendChild(document.createElement("div")), document.querySelector("#chart"));
+    const chartRoot =
+      document.querySelector("#chart") ||
+      container.appendChild(document.createElement("div"));
     chartRoot.id = "chart";
-    // Add CSS rule for scrolling (assuming this code runs in a context where it can manipulate styles or this rule is pre-applied)
-    chartRoot.style.overflowX = 'auto'; 
-    chartRoot.style.overflowY = 'hidden';
-    chartRoot.style.maxWidth = '100%';
+    chartRoot.style.overflowX = "auto";
+    chartRoot.style.overflowY = "hidden";
+    chartRoot.style.position = "relative";
 
-    const tooltip = createTooltip();
-    margin = { top: 40, right: 40, bottom: 120, left: 40 };
+    const tooltip = createTooltip(d3.select(container));
+    margin = { top: 50, right: 40, bottom: 130, left: 50 };
 
-    let lastState = { blockedCookies: {}, allowedCookies: {}, sortMode: "total", searchQuery: "" };
+    let lastState = {
+      blockedCookies: {},
+      allowedCookies: {},
+      sortMode: "total",
+      searchQuery: ""
+    };
 
-    function updateChart(patch) {
+    function updateChart(patch = {}) {
       lastState = { ...lastState, ...patch };
       const model = computeDomainModel(lastState);
       const data = applyFilterAndSort(model, lastState);
+      const domainCount = data.length || 1;
 
-      const domainCount = data.length;
-      // Define minimum pixel width for each data point to enforce spacing
-      const minSpacePerDomain = 60; 
-      
-      const containerWidth = container.clientWidth || 640;
-      const innerContainerWidth = containerWidth - margin.left - margin.right;
-      
-      // Calculate the required width based on data count, ensuring it's at least the container's inner width
+      const minSpacePerDomain = 70;
+      const containerWidth = container.clientWidth;
+      const innerWidth = containerWidth - margin.left - margin.right;
       const requiredWidth = domainCount * minSpacePerDomain;
-      const width = Math.max(innerContainerWidth, requiredWidth); 
-      
-      const height = Math.max(400, 160);
+      const width = Math.max(innerWidth, requiredWidth);
+      const height = 420;
 
       d3.select(chartRoot).select("svg").remove();
-      const svg = d3.select(chartRoot).append("svg")
-        .attr("width", width + margin.left + margin.right) // SVG width now equals the larger 'width'
+      const svg = d3
+        .select(chartRoot)
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom);
 
-      addNeonDefs(svg);
-      
-      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+      const styles = getComputedStyle(document.body);
+      const bgFill =
+        (styles.getPropertyValue("--chart-bg") || "rgba(10,15,35,0.6)").trim();
+      const gridColor =
+        (styles.getPropertyValue("--chart-grid") ||
+          "rgba(255,255,255,0.06)").trim();
+      const labelColor =
+        (styles.getPropertyValue("--chart-muted") || "#a8b8ff").trim();
+      const totalLineColor =
+        (styles.getPropertyValue("--chart-total-line") || "#00E5FF").trim();
+      const blockedLineColor =
+        (styles.getPropertyValue("--chart-blocked-line") || "#FF8FB3").trim();
 
-      // -- Background --
+      addNeonDefs(svg, totalLineColor, blockedLineColor);
+      const g = svg
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      // Background
       g.append("rect")
-        .attr("x", -20).attr("y", -20)
-        .attr("width", width + 40).attr("height", height + 40) // Background covers the new width
-        .attr("fill", "url(#chartBgGradient)")
-        .attr("rx", 12);
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", bgFill)
+        .attr("rx", 16);
 
       if (!data.length) {
-        // Center text on the visible part of the chart
-        g.append("text").attr("x", innerContainerWidth/2).attr("y", height/2) 
-          .attr("text-anchor", "middle").attr("fill", "#a3afd6")
-          .style("font-size", "14px")
-          .text("No cookie data yet. Start browsing to see activity.");
+        g.append("text")
+          .attr("x", innerWidth / 2)
+          .attr("y", height / 2)
+          .attr("text-anchor", "middle")
+          .attr("fill", labelColor)
+          .style("font-size", "16px")
+          .text("No cookie activity yet. Browse to see domains.");
         return;
       }
 
       const maxTotal = d3.max(data, d => d.total) || 1;
-      // X-scale maps indices (0 to N-1) across the new, potentially wider, 'width'
-      const xIndex = d3.scaleLinear().domain([0, Math.max(domainCount - 1, 1)]).range([0, width]); 
-      const y = d3.scaleLinear().domain([0, maxTotal * 1.1]).nice().range([height, 0]);
+      const xIndex = d3
+        .scaleLinear()
+        .domain([0, domainCount - 1])
+        .range([0, width]);
+      const y = d3
+        .scaleLinear()
+        .domain([0, maxTotal * 1.15])
+        .nice()
+        .range([height, 0]);
 
+      // Expose for debugging if needed
       window.currentXScale = xIndex;
       window.currentYScale = y;
 
-      // -- Curves (use the new wider xIndex) --
-      const totalArea = d3.area().x((d,i) => xIndex(i)).y0(height).y1(d => y(d.total)).curve(d3.curveMonotoneX);
-      const blockedArea = d3.area().x((d,i) => xIndex(i)).y0(height).y1(d => y(d.blocked)).curve(d3.curveMonotoneX);
-      const totalLine = d3.line().x((d,i) => xIndex(i)).y(d => y(d.total)).curve(d3.curveMonotoneX);
-      const blockedLine = d3.line().x((d,i) => xIndex(i)).y(d => y(d.blocked)).curve(d3.curveMonotoneX);
+      // Areas & Lines
+      const totalArea = d3
+        .area()
+        .x((d, i) => xIndex(i))
+        .y0(height)
+        .y1(d => y(d.total))
+        .curve(d3.curveMonotoneX);
 
-      // -- Grid --
-      g.append("g").attr("class", "wave-grid")
-        .selectAll("line")
-        .data(y.ticks(5))
-        .enter().append("line")
-        .attr("x1", 0).attr("x2", width) // Grid lines extend across the new width
-        .attr("y1", d => y(d)).attr("y2", d => y(d))
-        .attr("stroke", "rgba(255,255,255,0.05)")
-        .attr("stroke-dasharray", "4 4");
+      const blockedArea = d3
+        .area()
+        .x((d, i) => xIndex(i))
+        .y0(height)
+        .y1(d => y(d.blocked))
+        .curve(d3.curveMonotoneX);
 
-      // -- Areas --
-      g.append("path").datum(data)
-        .attr("fill", "url(#areaTotalGradient)")
+      const totalLine = d3
+        .line()
+        .x((d, i) => xIndex(i))
+        .y(d => y(d.total))
+        .curve(d3.curveMonotoneX);
+
+      const blockedLine = d3
+        .line()
+        .x((d, i) => xIndex(i))
+        .y(d => y(d.blocked))
+        .curve(d3.curveMonotoneX);
+
+      g.append("path")
+        .datum(data)
         .attr("d", totalArea)
-        .style("mix-blend-mode", "screen")
-        .attr("opacity", 0)
-        .transition().duration(800).attr("opacity", 1);
+        .attr("fill", "url(#areaTotalGradient)")
+        .style("mix-blend-mode", "screen");
 
-      g.append("path").datum(data)
-        .attr("fill", "url(#areaBlockedGradient)")
+      g.append("path")
+        .datum(data)
         .attr("d", blockedArea)
-        .style("mix-blend-mode", "screen")
-        .attr("opacity", 0)
-        .transition().duration(800).delay(100).attr("opacity", 1);
+        .attr("fill", "url(#areaBlockedGradient)")
+        .style("mix-blend-mode", "screen");
 
-      // -- Lines --
-      g.append("path").datum(data)
-        .attr("fill", "none").attr("stroke", "#00E5FF").attr("stroke-width", 2)
-        .attr("filter", "url(#lineGlow)")
+      g.append("path")
+        .datum(data)
         .attr("d", totalLine)
-        .attr("stroke-dasharray", function() { return this.getTotalLength(); })
-        .attr("stroke-dashoffset", function() { return this.getTotalLength(); })
-        .transition().duration(1000).ease(d3.easeCubicOut)
-        .attr("stroke-dashoffset", 0);
+        .attr("stroke", totalLineColor)
+        .attr("stroke-width", 2.5)
+        .attr("fill", "none")
+        .attr("filter", "url(#lineGlow)");
 
-      g.append("path").datum(data)
-        .attr("fill", "none").attr("stroke", "#FF8FB3").attr("stroke-width", 2)
-        .attr("filter", "url(#lineGlow)")
+      g.append("path")
+        .datum(data)
         .attr("d", blockedLine)
-        .attr("stroke-dasharray", function() { return this.getTotalLength(); })
-        .attr("stroke-dashoffset", function() { return this.getTotalLength(); })
-        .transition().duration(1000).delay(150).ease(d3.easeCubicOut)
-        .attr("stroke-dashoffset", 0);
+        .attr("stroke", blockedLineColor)
+        .attr("stroke-width", 2.5)
+        .attr("fill", "none")
+        .attr("filter", "url(#lineGlow)");
 
-      // -- X Axis Labels (REFINED) --
-      const xlabelGroup = g.append("g")
-        .attr("class", "wave-x-labels")
-        .attr("transform", `translate(0, ${height + 15})`);
+      // Glowing static dots (no movement, just pulse)
+      const dots = g.append("g").attr("class", "dots");
 
-      // Determine how many pixels each data point has
-      const spacePerItem = width / Math.max(domainCount, 1);
-      
-      // Only skip items if they are tighter than 11px
-      const skipFactor = spacePerItem < 11 ? Math.ceil(11 / spacePerItem) : 1;
-
-      data.forEach((d, i) => {
-        if (i % skipFactor !== 0) return;
-        
-        const x = xIndex(i);
-        
-        // 1. Remove prefixes (www, api, etc)
-        // 2. Remove TLD (split by dot and take the first part). 
-        let label = d.domain
-          .replace(/^www\./, '')
-          .replace(/^(ads|analytics|static|cdn|api|track|mobile|m)\./, '')
-          .split('.')[0]; 
-        
-        // Capitalize first letter for nicer look
-        label = label.charAt(0).toUpperCase() + label.slice(1);
-
-        // Truncate if still too long (e.g. "VeryLongCompanyName")
-        if (label.length > 20) {
-            label = label.substring(0, 18) + "..";
-        }
-
-        // Adjust font size based on density
-        const fontSize = spacePerItem < 16 ? "10px" : "11px";
-
-        xlabelGroup.append("text")
-          .attr("x", 0).attr("y", 0)
-          .attr("text-anchor", "end") 
-          .attr("dominant-baseline", "middle")
-          .attr("fill", i % 2 === 0 ? "#8c9eff" : "#647acb")
-          .style("font-size", fontSize)
-          .style("font-family", "'Inter', monospace")
-          .style("font-weight", "500")
-          .style("opacity", 0)
-          .attr("transform", `translate(${x}, 10) rotate(-90)`) 
-          .text(label)
-          .transition().duration(500).delay(300 + i * 10).style("opacity", 1);
-      });
-
-      // -- Interaction --
-      const cursorLine = g.append("line")
-        .attr("stroke", "#fff").attr("stroke-width", 1).attr("stroke-dasharray", "3 3")
-        .attr("y1", 0).attr("y2", height)
-        .style("opacity", 0).style("pointer-events", "none");
-
-      const overlay = g.selectAll(".hover-rect")
-        .data(data).enter().append("rect")
-        .attr("class", "hover-rect")
-        // Calculate the width of the hit area based on the new total width
-        .attr("x", (d, i) => xIndex(i) - (width / domainCount) / 2) 
-        .attr("y", 0)
-        .attr("width", width / Math.max(domainCount, 1))
-        .attr("height", height)
-        .attr("fill", "transparent");
-
-      const dots = g.selectAll(".wave-point")
-        .data(data).enter().append("circle")
-        .attr("cx", (d,i) => xIndex(i))
+      dots
+        .selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", (d, i) => xIndex(i))
         .attr("cy", d => y(d.total))
         .attr("r", 4)
-        .attr("fill", "#0a0c1c").attr("stroke", "#00E5FF").attr("stroke-width", 2)
-        .style("opacity", 0);
+        .attr("fill", totalLineColor)
+        .attr("filter", "url(#lineGlow)")
+        .style("opacity", 0.9)
+        .transition()
+        .duration(1600)
+        .ease(d3.easeCubicInOut)
+        .style("opacity", 0.35)
+        .transition()
+        .duration(1600)
+        .ease(d3.easeCubicInOut)
+        .style("opacity", 0.9)
+        .on("end", function repeat() {
+          d3.select(this)
+            .transition()
+            .duration(1600)
+            .ease(d3.easeCubicInOut)
+            .style("opacity", 0.35)
+            .transition()
+            .duration(1600)
+            .ease(d3.easeCubicInOut)
+            .style("opacity", 0.9)
+            .on("end", repeat);
+        });
+
+      // Vertical guide lines on top of the line
+      const guideGroup = g.append("g").attr("class", "guides-on-top");
+      guideGroup
+        .selectAll("line")
+        .data(data)
+        .enter()
+        .append("line")
+        .attr("x1", (d, i) => xIndex(i))
+        .attr("x2", (d, i) => xIndex(i))
+        .attr("y1", d => y(d.total))
+        .attr("y2", -20)
+        .attr("stroke", totalLineColor)
+        .attr("stroke-width", 1.3)
+        .attr("opacity", 0.28)
+        .attr("filter", "url(#lineGlow)");
+
+      // Grid
+      g.append("g")
+        .selectAll("line")
+        .data(y.ticks(6))
+        .enter()
+        .append("line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", d => y(d))
+        .attr("y2", d => y(d))
+        .attr("stroke", gridColor);
+
+      // X-Axis Labels — Straight, smart spacing
+      const labelGroup = g
+        .append("g")
+        .attr("transform", `translate(0,${height + 50})`);
+      const spacePerItem = width / domainCount;
+      const skip = spacePerItem < 80 ? Math.ceil(80 / spacePerItem) : 1;
+
+      data.forEach((d, i) => {
+        if (i % skip !== 0 && skip > 1) return;
+
+        let label = d.domain
+          .replace(/^www\./, "")
+          .replace(
+            /^(ads|api|cdn|track|analytics|static|m|mobile)\./,
+            ""
+          )
+          .split(".")[0];
+
+        label = label.charAt(0).toUpperCase() + label.slice(1);
+        if (label.length > 18) label = label.slice(0, 16) + "..";
+
+        const x = xIndex(i);
+        const fontSize =
+          spacePerItem < 60 ? "9px" : spacePerItem < 100 ? "10px" : "11px";
+
+        labelGroup
+          .append("text")
+          .attr("x", x)
+          .attr("y", 0)
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "hanging")
+          .style("font-size", fontSize)
+          .style("fill", labelColor)
+          .style("font-family", "system-ui")
+          .text(label)
+          .append("title")
+          .text(d.domain);
+      });
+
+      // Interaction overlay
+      const hitWidth = width / domainCount;
+      const overlay = g
+        .selectAll(".hit")
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("x", (d, i) => xIndex(i) - hitWidth / 2)
+        .attr("width", hitWidth)
+        .attr("height", height)
+        .attr("fill", "transparent")
+        .style("cursor", "pointer");
 
       overlay
-        .on("mouseover", function(event, d) {
-          const i = data.indexOf(d);
-          cursorLine.attr("x1", xIndex(i)).attr("x2", xIndex(i)).style("opacity", 0.3);
-          const dot = dots.filter((dt, idx) => idx === i);
-          dot.style("opacity", 1).transition().duration(200).attr("r", 6).attr("fill", "#00E5FF");
-          tooltip.show(buildTooltipHtmlForDomain(d), event, d, i);
+        .on("mousemove", function (event, d) {
+          // Tooltip is centered; event only selects which domain to show
+          tooltip.show(buildTooltipHtmlForDomain(d), event);
         })
-        .on("mouseout", function(event, d) {
-           cursorLine.style("opacity", 0);
-           dots.style("opacity", 0).attr("r", 4).attr("fill", "#0a0c1c");
-           tooltip.hide();
-        })
-        .on("click", (event, d) => openDomainPanel(d));
+        .on("mouseout", () => tooltip.hide())
+        .on("click", (e, d) => openDomainPanel(d));
 
-      // -- Legend --
-      // Place the legend relative to the *visible* container width if possible, or right-align it on the wide chart.
-      const legendX = innerContainerWidth > width ? width - 10 : innerContainerWidth - 10;
-      const legend = g.append("g").attr("transform", `translate(${legendX}, -15)`);
-      const addLegendItem = (color, text, yOffset) => {
-        const grp = legend.append("g").attr("transform", `translate(0, ${yOffset})`);
-        grp.append("rect").attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", color);
-        grp.append("text").attr("x", -6).attr("y", 10).text(text)
-           .attr("text-anchor", "end").attr("fill", "#b0bcff").style("font-size", "12px");
-      };
-      addLegendItem("#00E5FF", "Total", 0);
-      addLegendItem("#FF8FB3", "Blocked", 20);
+      // Legend
+      const legend = g
+        .append("g")
+        .attr("transform", `translate(${width - 120}, -25)`);
+      [
+        `${totalLineColor}|Total`,
+        `${blockedLineColor}|Blocked`
+      ].forEach((item, i) => {
+        const [color, text] = item.split("|");
+        legend
+          .append("rect")
+          .attr("x", -10)
+          .attr("y", i * 20)
+          .attr("width", 14)
+          .attr("height", 14)
+          .attr("rx", 4)
+          .attr("fill", color);
+        legend
+          .append("text")
+          .attr("x", 8)
+          .attr("y", i * 20 + 10)
+          .text(text)
+          .attr("fill", labelColor)
+          .style("font-size", "12px");
+      });
     }
 
-    const ctrlAPI = createControls(container);
-    ctrlAPI.setSortHandler(mode => updateChart({ sortMode: mode }));
-    ctrlAPI.setSearchHandler(query => updateChart({ searchQuery: query }));
-    
+    const ctrl = createControls(container);
+    ctrl.setSortHandler(mode => updateChart({ sortMode: mode }));
+    ctrl.setSearchHandler(q => updateChart({ searchQuery: q }));
+
+    // Responsive
     if (typeof ResizeObserver !== "undefined") {
-      let resizeTimeout;
-      const ro = new ResizeObserver(() => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          requestAnimationFrame(() => updateChart(lastState));
-        }, 250); 
-      });
-      ro.observe(container);
+      new ResizeObserver(() =>
+        requestAnimationFrame(() => updateChart())
+      ).observe(container);
     } else {
       window.addEventListener("resize", () =>
-        requestAnimationFrame(() => updateChart(lastState))
+        requestAnimationFrame(() => updateChart())
       );
     }
-    
+
     return { updateChart };
   }
 
