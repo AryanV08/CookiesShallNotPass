@@ -116,7 +116,6 @@ CookiesShallNotPass uses a simple front-end build system based on **HTML, CSS, J
 
 ### How to test the software
 To run the provided test suite, run:  
-- `npm i`  # same as 'npm install'
 - `npm run test`
 in the root directory of the repository.  
 
