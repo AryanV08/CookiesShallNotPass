@@ -102,6 +102,7 @@ Make sure all changes are saved and the code is up to date.
 
 - **Run tests**  
 In the project folder:  
+- `npm i`  # same as 'npm install'
 - `npm run test`
 Make sure all tests pass.  
 
