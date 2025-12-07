@@ -5,6 +5,25 @@ if (typeof window !== "undefined" && window.__TEST__) {
   visualization = { updateChart: () => {} };
 } else {
   // ================= Helpers =================
+  const MULTI_PART_TLDS = new Set([
+    "co.uk",
+    "org.uk",
+    "gov.uk",
+    "ac.uk",
+    "co.jp",
+    "com.au",
+    "net.au",
+    "org.au",
+    "gov.au",
+    "com.br",
+    "com.cn",
+    "com.hk",
+    "com.sg",
+    "co.in",
+    "com.mx",
+    "com.tr"
+  ]);
+
   function formatCookieFrequencies(cookies) {
     if (!cookies || Object.keys(cookies).length === 0) {
       return "<small>No cookies recorded yet.</small>";
@@ -16,46 +35,95 @@ if (typeof window !== "undefined" && window.__TEST__) {
       .join("<br/>");
   }
 
+  function canonicalizeDomain(domain) {
+    if (!domain || typeof domain !== "string") {
+      return "unknown";
+    }
+    let normalized = domain.toLowerCase().trim();
+    normalized = normalized.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    normalized = normalized.replace(/^www\./, "");
+    normalized = normalized.replace(/^\.+|\.+$/g, "");
+
+    const parts = normalized.split(".").filter(Boolean);
+    if (parts.length <= 2) {
+      return normalized || domain;
+    }
+
+    for (const suffix of MULTI_PART_TLDS) {
+      if (normalized === suffix) continue;
+      if (normalized.endsWith(`.${suffix}`)) {
+        const suffixParts = suffix.split(".");
+        if (parts.length > suffixParts.length) {
+          return parts.slice(-(suffixParts.length + 1)).join(".");
+        }
+      }
+    }
+
+    return parts.slice(-2).join(".");
+  }
+
+  function mergeCookieMaps(target, source) {
+    for (const [name, count] of Object.entries(source || {})) {
+      target[name] = (target[name] || 0) + count;
+    }
+  }
+
   function computeDomainModel(state) {
     const map = new Map();
     const blockedMap = state.blockedCookies || {};
     const allowedMap = state.allowedCookies || {};
 
-    for (const [domain, cookies] of Object.entries(blockedMap)) {
-      map.set(domain, {
-        domain,
-        blocked: Object.keys(cookies).length,
-        allowed: 0,
-        blockedCookies: cookies,
-        allowedCookies: {}
-      });
-    }
-    for (const [domain, cookies] of Object.entries(allowedMap)) {
-      if (!map.has(domain)) {
-        map.set(domain, {
-          domain,
+    const initEntry = domain => {
+      const canonical = canonicalizeDomain(domain);
+      if (!map.has(canonical)) {
+        map.set(canonical, {
+          domain: canonical,
           blocked: 0,
-          allowed: Object.keys(cookies).length,
+          allowed: 0,
           blockedCookies: {},
-          allowedCookies: cookies
+          allowedCookies: {},
+          sourceDomains: new Set()
         });
-      } else {
-        const row = map.get(domain);
-        row.allowed = Object.keys(cookies).length;
-        row.allowedCookies = cookies;
       }
+      const entry = map.get(canonical);
+      entry.sourceDomains.add(domain);
+      return entry;
+    };
+
+    for (const [domain, cookies] of Object.entries(blockedMap)) {
+      const entry = initEntry(domain);
+      mergeCookieMaps(entry.blockedCookies, cookies);
     }
 
-    const arr = Array.from(map.values());
-    arr.forEach(row => {
-      row.total = row.blocked + row.allowed;
+    for (const [domain, cookies] of Object.entries(allowedMap)) {
+      const entry = initEntry(domain);
+      mergeCookieMaps(entry.allowedCookies, cookies);
+    }
+
+    return Array.from(map.values()).map(entry => {
+      entry.blocked = Object.keys(entry.blockedCookies).length;
+      entry.allowed = Object.keys(entry.allowedCookies).length;
+      entry.total = entry.blocked + entry.allowed;
+      entry.sourceDomains = Array.from(entry.sourceDomains).sort();
+      return entry;
     });
-    return arr;
+  }
+
+  function matchesQuery(domainObj, query) {
+    if (!query) return true;
+    const canonMatch = domainObj.domain.toLowerCase().includes(query);
+    if (canonMatch) return true;
+    if (Array.isArray(domainObj.sourceDomains)) {
+      return domainObj.sourceDomains.some(domain =>
+        domain.toLowerCase().includes(query)
+      );
+    }
+    return false;
   }
 
   function applyFilterAndSort(model, state) {
     const q = (state.searchQuery || "").trim().toLowerCase();
-    let data = q ? model.filter(d => d.domain.toLowerCase().includes(q)) : model.slice();
+    let data = q ? model.filter(d => matchesQuery(d, q)) : model.slice();
 
     switch (state.sortMode) {
       case "blocked":
@@ -76,6 +144,15 @@ if (typeof window !== "undefined" && window.__TEST__) {
         break;
     }
     return data;
+  }
+
+  function resolveColor(...candidates) {
+    for (const candidate of candidates) {
+      if (candidate && typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+    return "#ffffff";
   }
 
   // ================= Tooltip (centered card, not following mouse) =================
@@ -123,6 +200,15 @@ if (typeof window !== "undefined" && window.__TEST__) {
     const blockedFreq = formatCookieFrequencies(domainObj.blockedCookies);
     const allowedFreq = formatCookieFrequencies(domainObj.allowedCookies);
 
+    const hasMultipleSources =
+      Array.isArray(domainObj.sourceDomains) && domainObj.sourceDomains.length > 1;
+    const listedSources = hasMultipleSources
+      ? domainObj.sourceDomains.slice(0, 4).join(", ")
+      : "";
+    const remainingSources = hasMultipleSources
+      ? Math.max(0, domainObj.sourceDomains.length - 4)
+      : 0;
+
     return `
       <div style="margin-bottom:10px;">
         <div style="font-size:13px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.7;">
@@ -131,6 +217,15 @@ if (typeof window !== "undefined" && window.__TEST__) {
         <div style="font-size:17px; font-weight:600; margin-top:4px;">
           ${domainObj.domain}
         </div>
+        ${
+          hasMultipleSources
+            ? `<div style="font-size:11px; opacity:0.75; margin-top:4px;">
+                Includes: ${listedSources}${
+                remainingSources > 0 ? ` +${remainingSources} more` : ""
+              }
+              </div>`
+            : ""
+        }
       </div>
 
       <div style="display:flex; gap:12px; margin-bottom:10px; font-size:13px;">
@@ -274,57 +369,6 @@ if (typeof window !== "undefined" && window.__TEST__) {
     };
   }
 
-  // ================= Neon Gradients & Filters (theme-aware) =================
-  function addNeonDefs(svg, totalLineColor, blockedLineColor) {
-    const defs = svg.append("defs");
-
-    // Gradients for areas
-    const totalGradient = defs
-      .append("linearGradient")
-      .attr("id", "areaTotalGradient")
-      .attr("x1", "0%")
-      .attr("y1", "0%")
-      .attr("x2", "0%")
-      .attr("y2", "100%");
-    totalGradient
-      .selectAll("stop")
-      .data([
-        { offset: "0%", color: totalLineColor, opacity: 0.35 },
-        { offset: "100%", color: totalLineColor, opacity: 0 }
-      ])
-      .enter()
-      .append("stop")
-      .attr("offset", d => d.offset)
-      .attr("stop-color", d => d.color)
-      .attr("stop-opacity", d => d.opacity);
-
-    const blockedGradient = defs
-      .append("linearGradient")
-      .attr("id", "areaBlockedGradient")
-      .attr("x1", "0%")
-      .attr("y1", "0%")
-      .attr("x2", "0%")
-      .attr("y2", "100%");
-    blockedGradient
-      .selectAll("stop")
-      .data([
-        { offset: "0%", color: blockedLineColor, opacity: 0.45 },
-        { offset: "100%", color: blockedLineColor, opacity: 0 }
-      ])
-      .enter()
-      .append("stop")
-      .attr("offset", d => d.offset)
-      .attr("stop-color", d => d.color)
-      .attr("stop-opacity", d => d.opacity);
-
-    // Glow filter for lines & dots
-    const filter = defs.append("filter").attr("id", "lineGlow");
-    filter.append("feGaussianBlur").attr("stdDeviation", "3").attr("result", "blur");
-    const merge = filter.append("feMerge");
-    merge.append("feMergeNode").attr("in", "blur");
-    merge.append("feMergeNode").attr("in", "SourceGraphic");
-  }
-
   // ================= Main Visualization =================
   let container, margin;
 
@@ -378,12 +422,20 @@ if (typeof window !== "undefined" && window.__TEST__) {
           "rgba(255,255,255,0.06)").trim();
       const labelColor =
         (styles.getPropertyValue("--chart-muted") || "#a8b8ff").trim();
-      const totalLineColor =
-        (styles.getPropertyValue("--chart-total-line") || "#00E5FF").trim();
-      const blockedLineColor =
-        (styles.getPropertyValue("--chart-blocked-line") || "#FF8FB3").trim();
-
-      addNeonDefs(svg, totalLineColor, blockedLineColor);
+      const allowedBarColor = resolveColor(
+        styles.getPropertyValue("--chart-allowed-bar"),
+        styles.getPropertyValue("--chart-total-line"),
+        "#22c55e"
+      );
+      const blockedBarColor = resolveColor(
+        styles.getPropertyValue("--chart-blocked-bar"),
+        styles.getPropertyValue("--chart-blocked-line"),
+        "#ef4444"
+      );
+      const barOutlineColor = resolveColor(
+        styles.getPropertyValue("--panel-outline"),
+        "rgba(255,255,255,0.25)"
+      );
       const g = svg
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -421,114 +473,9 @@ if (typeof window !== "undefined" && window.__TEST__) {
       window.currentXScale = xIndex;
       window.currentYScale = y;
 
-      // Areas & Lines
-      const totalArea = d3
-        .area()
-        .x((d, i) => xIndex(i))
-        .y0(height)
-        .y1(d => y(d.total))
-        .curve(d3.curveMonotoneX);
-
-      const blockedArea = d3
-        .area()
-        .x((d, i) => xIndex(i))
-        .y0(height)
-        .y1(d => y(d.blocked))
-        .curve(d3.curveMonotoneX);
-
-      const totalLine = d3
-        .line()
-        .x((d, i) => xIndex(i))
-        .y(d => y(d.total))
-        .curve(d3.curveMonotoneX);
-
-      const blockedLine = d3
-        .line()
-        .x((d, i) => xIndex(i))
-        .y(d => y(d.blocked))
-        .curve(d3.curveMonotoneX);
-
-      g.append("path")
-        .datum(data)
-        .attr("d", totalArea)
-        .attr("fill", "url(#areaTotalGradient)")
-        .style("mix-blend-mode", "screen");
-
-      g.append("path")
-        .datum(data)
-        .attr("d", blockedArea)
-        .attr("fill", "url(#areaBlockedGradient)")
-        .style("mix-blend-mode", "screen");
-
-      g.append("path")
-        .datum(data)
-        .attr("d", totalLine)
-        .attr("stroke", totalLineColor)
-        .attr("stroke-width", 2.5)
-        .attr("fill", "none")
-        .attr("filter", "url(#lineGlow)");
-
-      g.append("path")
-        .datum(data)
-        .attr("d", blockedLine)
-        .attr("stroke", blockedLineColor)
-        .attr("stroke-width", 2.5)
-        .attr("fill", "none")
-        .attr("filter", "url(#lineGlow)");
-
-      // Glowing static dots (no movement, just pulse)
-      const dots = g.append("g").attr("class", "dots");
-
-      dots
-        .selectAll("circle")
-        .data(data)
-        .enter()
-        .append("circle")
-        .attr("cx", (d, i) => xIndex(i))
-        .attr("cy", d => y(d.total))
-        .attr("r", 4)
-        .attr("fill", totalLineColor)
-        .attr("filter", "url(#lineGlow)")
-        .style("opacity", 0.9)
-        .transition()
-        .duration(1600)
-        .ease(d3.easeCubicInOut)
-        .style("opacity", 0.35)
-        .transition()
-        .duration(1600)
-        .ease(d3.easeCubicInOut)
-        .style("opacity", 0.9)
-        .on("end", function repeat() {
-          d3.select(this)
-            .transition()
-            .duration(1600)
-            .ease(d3.easeCubicInOut)
-            .style("opacity", 0.35)
-            .transition()
-            .duration(1600)
-            .ease(d3.easeCubicInOut)
-            .style("opacity", 0.9)
-            .on("end", repeat);
-        });
-
-      // Vertical guide lines on top of the line
-      const guideGroup = g.append("g").attr("class", "guides-on-top");
-      guideGroup
-        .selectAll("line")
-        .data(data)
-        .enter()
-        .append("line")
-        .attr("x1", (d, i) => xIndex(i))
-        .attr("x2", (d, i) => xIndex(i))
-        .attr("y1", d => y(d.total))
-        .attr("y2", -20)
-        .attr("stroke", totalLineColor)
-        .attr("stroke-width", 1.3)
-        .attr("opacity", 0.28)
-        .attr("filter", "url(#lineGlow)");
-
-      // Grid
-      g.append("g")
+      // Grid behind the bars
+      const gridGroup = g.append("g").attr("class", "grid-lines");
+      gridGroup
         .selectAll("line")
         .data(y.ticks(6))
         .enter()
@@ -537,17 +484,67 @@ if (typeof window !== "undefined" && window.__TEST__) {
         .attr("x2", width)
         .attr("y1", d => y(d))
         .attr("y2", d => y(d))
-        .attr("stroke", gridColor);
+        .attr("stroke", gridColor)
+        .attr("stroke-width", 0.8)
+        .attr("stroke-dasharray", "4 6");
+
+      const barWidth = Math.max(26, Math.min(90, width / domainCount * 0.55));
+
+      const barsGroup = g
+        .append("g")
+        .attr("class", "bars")
+        .style("mix-blend-mode", "normal");
+
+      const domainGroups = barsGroup
+        .selectAll(".domain-bar")
+        .data(data)
+        .enter()
+        .append("g")
+        .attr("class", "domain-bar")
+        .attr("transform", (d, i) => `translate(${xIndex(i) - barWidth / 2},0)`);
+
+      barsGroup.raise();
+
+      domainGroups
+        .append("rect")
+        .attr("class", "allowed-segment")
+        .attr("x", 0)
+        .attr("width", barWidth)
+        .attr("y", d => y(d.allowed))
+        .attr("height", d => Math.max(0, height - y(d.allowed)))
+        .attr("fill", allowedBarColor)
+        .attr("opacity", 0.95)
+        .attr("stroke", "none");
+
+      domainGroups
+        .append("rect")
+        .attr("class", "blocked-segment")
+        .attr("x", 0)
+        .attr("width", barWidth)
+        .attr("y", d => y(d.total))
+        .attr("height", d => Math.max(0, y(d.allowed) - y(d.total)))
+        .attr("fill", blockedBarColor)
+        .attr("opacity", 0.98)
+        .attr("stroke", "none");
+
+      domainGroups
+        .append("rect")
+        .attr("class", "bar-outline")
+        .attr("x", 0)
+        .attr("width", barWidth)
+        .attr("y", d => y(d.total))
+        .attr("height", d => Math.max(1, height - y(d.total)))
+        .attr("fill", "none")
+        .attr("stroke", barOutlineColor)
+        .attr("stroke-width", 1.1);
 
       // X-Axis Labels — Straight, smart spacing
       const labelGroup = g
         .append("g")
         .attr("transform", `translate(0,${height + 50})`);
       const spacePerItem = width / domainCount;
-      const skip = spacePerItem < 80 ? Math.ceil(80 / spacePerItem) : 1;
 
       data.forEach((d, i) => {
-        if (i % skip !== 0 && skip > 1) return;
 
         let label = d.domain
           .replace(/^www\./, "")
@@ -579,7 +576,7 @@ if (typeof window !== "undefined" && window.__TEST__) {
       });
 
       // Interaction overlay
-      const hitWidth = width / domainCount;
+      const hitWidth = Math.max(barWidth, width / domainCount * 0.75);
       const overlay = g
         .selectAll(".hit")
         .data(data)
@@ -590,6 +587,8 @@ if (typeof window !== "undefined" && window.__TEST__) {
         .attr("height", height)
         .attr("fill", "transparent")
         .style("cursor", "pointer");
+
+      overlay.raise();
 
       overlay
         .on("mousemove", function (event, d) {
@@ -603,27 +602,32 @@ if (typeof window !== "undefined" && window.__TEST__) {
       const legend = g
         .append("g")
         .attr("transform", `translate(${width - 120}, -25)`);
-      [
-        `${totalLineColor}|Total`,
-        `${blockedLineColor}|Blocked`
-      ].forEach((item, i) => {
-        const [color, text] = item.split("|");
-        legend
-          .append("rect")
-          .attr("x", -10)
-          .attr("y", i * 20)
-          .attr("width", 14)
-          .attr("height", 14)
-          .attr("rx", 4)
-          .attr("fill", color);
-        legend
-          .append("text")
-          .attr("x", 8)
-          .attr("y", i * 20 + 10)
-          .text(text)
-          .attr("fill", labelColor)
-          .style("font-size", "12px");
-      });
+      const legendItems = legend
+        .selectAll(".legend-item")
+        .data([
+          { color: allowedBarColor, label: "Allowed" },
+          { color: blockedBarColor, label: "Blocked" }
+        ])
+        .enter()
+        .append("g")
+        .attr("class", "legend-item")
+        .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+
+      legendItems
+        .append("rect")
+        .attr("x", -10)
+        .attr("y", 0)
+        .attr("width", 14)
+        .attr("height", 14)
+        .attr("fill", d => d.color);
+
+      legendItems
+        .append("text")
+        .attr("x", 8)
+        .attr("y", 10)
+        .text(d => d.label)
+        .attr("fill", labelColor)
+        .style("font-size", "12px");
     }
 
     const ctrl = createControls(container);
