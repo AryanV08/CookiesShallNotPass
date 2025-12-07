@@ -94,7 +94,7 @@ The popup gives you direct access to essential controls while browsing.
 
 **Edit Preferences:**  
 
-<img src="../images/preference.png" alt="Choosing Preference" width="500"/>
+<img src="../images/Preference.png" alt="Choosing Preference" width="500"/>
 
 - Manage your extension settings directly from the dashboard.  
   - Auto-Blocking: Turn automatic cookie blocking on or off globally.  
