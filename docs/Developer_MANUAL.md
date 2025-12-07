@@ -78,6 +78,7 @@ There is no compilation step — you simply install dependencies and load the pr
 ---
 ### How to test the software
 To run the provided test suite, run:  
+- `npm i`  # same as 'npm install'
 - `npm run test`
 in the root directory of the repository.  
 
@@ -91,7 +92,6 @@ The tests will automatically be run on each commit and pull request to the githu
 3. **Write a Test Case:** Each test is defined using the `test()` or `it()` function.  
 4. **Group Tests with describe():** For better organization, related tests are grouped using `describe()`.  
 5. **Run the Test:** Run Jest with:  
-- `npm i`  # same as 'npm install'
 - `npm run test`
 
 ---
