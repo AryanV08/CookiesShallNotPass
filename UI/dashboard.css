@@ -10,7 +10,7 @@
   --text: #f5f7ff;
   --muted: #a3afd6;
   --accent: #8c6bff;
-  --accent-alt: #33f3c1;
+  --accent-alt: #33f3c1; 
   --accent-soft: rgba(140, 107, 255, 0.16);
   --danger: #ff6b8c;
   --shadow: 0 25px 50px rgba(2, 3, 10, 0.85);
@@ -635,63 +635,274 @@ button.secondary:hover {
   padding: 0 20px;   /* Add padding to maintain alignment */
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
-
-.visualization-container text {
-  fill: var(--text);
-  font-size: 14px;
+/* ====================== FIXED VISUALIZATION CONTAINER ====================== */
+.visualization-container {
+  position: relative;
+  width: 100%;
+  height: 580px;                    /* Consistent height */
+  border-radius: 16px;
+  background: linear-gradient(145deg, 
+    rgba(12, 15, 32, 0.96), 
+    rgba(6, 8, 20, 0.98));
+  border: 1px solid var(--soft-outline);
+  overflow: hidden;
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
 }
 
-.tooltip {
-  position: fixed;
-  background: rgba(6, 8, 18, 0.95);
-  padding: 12px 16px;
-  border: 1px solid var(--panel-outline);
-  border-radius: 12px;
-  pointer-events: none;
-  font-size: 14px;
-  z-index: 1000;
-  max-width: 500px;
-  min-width: 300px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.65);
-  color: var(--text);
-  line-height: 1.5;
-  word-wrap: break-word;
-  white-space: pre-wrap;
+/* The actual scrollable chart area */
+#chart {
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 20px 20px 30px 20px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
 }
 
-.tooltip strong {
-  color: var(--accent);
-  font-size: 15px;
-  display: block;
-  margin-bottom: 4px;
+#chart::-webkit-scrollbar {
+  height: 10px;
 }
 
-.tooltip small {
-  color: var(--muted);
-  display: block;
-  margin: 4px 0;
-  font-style: italic;
-}
-
-.visualization-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.visualization-container::-webkit-scrollbar-track {
+#chart::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 4px;
+  border-radius: 6px;
+  margin: 0 20px;
 }
 
-.visualization-container::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 4px;
+#chart::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--accent), var(--accent-alt));
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(140, 107, 255, 0.4);
 }
 
-.visualization-container::-webkit-scrollbar-thumb:hover {
+#chart::-webkit-scrollbar-thumb:hover {
   background: var(--accent-alt);
+  box-shadow: 0 0 20px rgba(51, 243, 193, 0.6);
 }
 
-/* End visualization styles */
+/* Controls inside visualization */
+.viz-controls {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: rgba(10, 12, 28, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(140, 107, 255, 0.3);
+  border-radius: 14px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+}
+
+.viz-controls-left,
+.viz-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viz-search {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 13px;
+  width: 180px;
+  transition: all 0.25s ease;
+}
+
+.viz-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(140, 107, 255, 0.2);
+}
+
+.viz-sort {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.viz-sort.active,
+.viz-sort:hover {
+  background: rgba(140, 107, 255, 0.25);
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: 0 0 12px rgba(140, 107, 255, 0.3);
+}
+
+.viz-sort-label {
+  color: #b8c2ff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Custom D3 Tooltip (replace old .tooltip) */
+.custom-tooltip {
+  position: fixed !important;
+  background: linear-gradient(135deg, rgba(10, 12, 30, 0.98), rgba(6, 8, 20, 0.98));
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(140, 107, 255, 0.4);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13.5px;
+  color: #f0f4ff;
+  line-height: 1.55;
+  max-width: 340px;
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(140, 107, 255, 0.25);
+  pointer-events: none;
+  z-index: 99999;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.2s ease;
+  transform: translateY(8px);
+}
+
+.custom-tooltip::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 20px;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+  border-right-color: var(--accent);
+  filter: drop-shadow(-2px 0 8px rgba(0,0,0,0.4));
+}
+
+/* Light theme support for tooltip */
+body.light-theme .custom-tooltip {
+  background: rgba(255, 255, 255, 0.98);
+  color: #0f172a;
+  border-color: rgba(148, 163, 184, 0.6);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+
+body.light-theme .custom-tooltip::before {
+  border-right-color: #4f46e5;
+}
+
+/* Domain Detail Slide Panel */
+.domain-slide-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 4, 13, 0.92);
+  backdrop-filter: blur(20px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.domain-slide-panel.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.domain-slide-inner {
+  background: linear-gradient(145deg, rgba(14, 17, 35, 0.98), rgba(8, 10, 25, 0.98));
+  border: 1px solid var(--panel-outline);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.8), var(--glow);
+  position: relative;
+}
+
+.domain-slide-close {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.domain-slide-close:hover {
+  background: var(--danger);
+  transform: scale(1.1);
+}
+
+.domain-slide-title {
+  margin: 0;
+  padding: 24px 24px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+}
+
+.domain-slide-body {
+  padding: 20px 28px 28px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.domain-slide-section h4 {
+  margin: 20px 0 10px;
+  color: var(--accent-alt);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.domain-cookie-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.domain-cookie-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.08);
+  font-size: 13px;
+}
+
+.domain-cookie-list span:first-child {
+  color: var(--text);
+  opacity: 0.9;
+}
+
+.domain-cookie-list span:last-child {
+  color: var(--accent-alt);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 
 /* Cookies overview charts */
 .cookie-chart-grid {
